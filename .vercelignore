@@ -1,0 +1,7 @@
+# Only public/ is served, but the Vercel CLI uploads the project folder. Keep secrets and backend code out of the upload.
+.env
+.env.*
+.DS_Store
+supabase/
+tests/
+README.md

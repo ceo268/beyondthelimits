@@ -1,0 +1,10 @@
+project_id = "beyond-the-limits"
+
+[functions.checkout]
+verify_jwt = false
+
+[functions.razorpay-webhook]
+verify_jwt = false
+
+[functions.ticket-email]
+verify_jwt = false
