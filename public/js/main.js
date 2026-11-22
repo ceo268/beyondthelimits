@@ -353,6 +353,14 @@ function bindMotionAndImages() {
   }, { rootMargin: "100px" });
   photos.forEach((img) => imageObserver.observe(img.parentElement));
 
+  // Touch screens have no hover: bring each speaker photo into full colour while it crosses the middle of the screen.
+  if (!matchMedia("(hover: hover)").matches) {
+    const focusObserver = new IntersectionObserver((entries) => {
+      entries.forEach(({ isIntersecting, target }) => target.classList.toggle("in-focus", isIntersecting));
+    }, { rootMargin: "-38% 0px -38% 0px" });
+    $$(".speaker-card").forEach((card) => focusObserver.observe(card));
+  }
+
   if (motion.matches) return;
   const revealObserver = new IntersectionObserver((entries) => {
     entries.forEach(({ isIntersecting, target }) => {

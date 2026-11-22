@@ -384,65 +384,87 @@ mark { padding: .12em .23em .15em; border-radius: var(--radius-mark); color: var
 @keyframes marquee { to { transform: translateX(-50%); } }
 @keyframes shimmer { 0%, 71% { background-position: 175% 0; } 93%, 100% { background-position: -75% 0; } }
 
-/* Full-width portraits with cream captions for the summit lineup */
+/* Speaker lineup: uniform 4:5 portraits in a warm gold monochrome that turns to full colour on hover
+   (or, on touch screens, as the card scrolls through the middle of the screen). */
 .speakers { background: radial-gradient(ellipse at 91% 0%, var(--gold-glow), var(--clear) 37%), var(--panel); }
 .speaker-grid {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: clamp(10px, 1.3vw, 19px);
+  gap: clamp(12px, 1.4vw, 20px);
   padding: 0;
   margin-top: clamp(28px, 3.2vw, 44px);
   list-style: none;
 }
 .speaker-card {
-  display: flex;
-  flex-direction: column;
+  position: relative;
+  isolation: isolate;
   min-width: 0;
   overflow: hidden;
-  border: 1px solid var(--gold-dark);
+  border: 1px solid rgb(212 175 55 / .26);
   border-radius: var(--radius-card);
-  background: var(--cream);
-  color: var(--black);
-  transition: translate .2s ease, border-color .2s ease, box-shadow .2s ease;
+  background: #0d0c0a;
+  color: var(--text);
+  box-shadow: 0 10px 28px rgb(0 0 0 / .35);
+  transition: translate .3s ease, border-color .3s ease, box-shadow .3s ease;
 }
 .speaker-portrait {
   position: relative;
   display: grid;
   place-items: center;
-  aspect-ratio: 5 / 4;
+  aspect-ratio: 4 / 5;
   overflow: hidden;
-  border-block-end: 2px solid var(--gold);
-  background: radial-gradient(ellipse at 50% 25%, var(--gold-glow), var(--clear) 72%), var(--panel-2);
+  background: radial-gradient(ellipse at 50% 30%, rgb(212 175 55 / .2), var(--clear) 65%), #14120e;
   color: var(--gold-light);
+}
+.speaker-portrait::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  pointer-events: none;
+  background:
+    linear-gradient(to top, rgb(0 0 0 / .94) 0%, rgb(0 0 0 / .62) 24%, rgb(0 0 0 / 0) 50%),
+    linear-gradient(160deg, rgb(212 175 55 / .14), var(--clear) 42%);
 }
 .speaker-portrait > span {
   display: grid;
   place-items: center;
-  width: 38%;
-  min-width: 42px;
-  max-width: 84px;
+  width: 46%;
+  max-width: 120px;
   aspect-ratio: 1;
+  margin-bottom: 18%;
   border: 1px solid var(--gold-dark);
   border-radius: var(--radius-round);
-  font: 700 clamp(1rem, 2vw, 1.62rem)/1 var(--font-display);
+  background: radial-gradient(circle at 50% 35%, rgb(212 175 55 / .18), var(--clear) 70%);
+  box-shadow: 0 0 0 6px rgb(212 175 55 / .06);
+  font: 700 clamp(1.3rem, 2.4vw, 2.1rem)/1 var(--font-display);
 }
 .speaker-portrait .slot-image {
-  object-position: var(--portrait-position, 50% 9%);
+  object-position: 50% 30%;
+  filter: grayscale(1) sepia(.3) contrast(1.08) brightness(.9);
+  transition: filter .6s ease, transform .8s cubic-bezier(.2, .7, .2, 1);
 }
-#speaker-abdul-nabeel { --portrait-position: 50% 26%; }
-#speaker-anil-semiya,
-#speaker-chalani-jewellers,
-#speaker-namitha-marimuthu,
-#speaker-tp-showkath { --portrait-position: center top; }
-#speaker-kolapasi { --portrait-position: 50% 23%; }
 .speaker-copy {
-  flex: 1;
+  position: absolute;
+  inset: auto 0 0;
+  z-index: 3;
   min-width: 0;
-  min-height: 4.35rem;
-  padding: .85rem clamp(.7rem, 1.35vw, 1.2rem);
+  padding: 0 clamp(.8rem, 1.3vw, 1.15rem) clamp(.85rem, 1.3vw, 1.1rem);
 }
-.speaker-copy h3 { font-size: clamp(.92rem, 1.3vw, 1.14rem); font-weight: 700; letter-spacing: -.025em; line-height: 1.2; overflow-wrap: anywhere; }
-.speaker-copy p { margin-top: .28rem; color: var(--dark-copy); font-size: .8rem; line-height: 1.3; overflow-wrap: anywhere; }
+.speaker-copy::before {
+  content: "";
+  display: block;
+  width: 26px;
+  height: 2px;
+  margin-bottom: .55rem;
+  border-radius: 2px;
+  background: var(--gold-gradient);
+  transition: width .4s ease;
+}
+.speaker-copy h3 { color: var(--text); font-size: clamp(.98rem, 1.35vw, 1.22rem); font-weight: 700; letter-spacing: -.02em; line-height: 1.18; overflow-wrap: anywhere; text-shadow: 0 1px 12px rgb(0 0 0 / .6); }
+.speaker-copy p { margin-top: .3rem; color: var(--gold-light); font-size: .66rem; font-weight: 700; letter-spacing: .14em; line-height: 1.35; text-transform: uppercase; overflow-wrap: anywhere; }
+.speaker-card.in-focus .slot-image { filter: none; }
+.speaker-card.in-focus .speaker-copy::before { width: 44px; }
 
 /* Pass tickets: square face, perforation and detachable-looking stub */
 .passes { margin-block: var(--section-gap); width: min(1272px, calc(100% - clamp(40px, 8vw, 120px))); }
@@ -600,7 +622,9 @@ mark { padding: .12em .23em .15em; border-radius: var(--radius-mark); color: var
 @media (hover: hover) {
   .button:not(:disabled):hover, .action-card:hover { transform: translateY(-3px); }
   .button-secondary:hover { border-color: var(--gold-light); }
-  .speaker-card:hover { translate: 0 -4px; border-color: var(--gold-dark); box-shadow: 0 8px 16px var(--shadow); }
+  .speaker-card:hover { translate: 0 -6px; border-color: var(--gold); box-shadow: 0 18px 40px rgb(0 0 0 / .55), 0 0 28px rgb(212 175 55 / .16); }
+  .speaker-card:hover .slot-image { filter: none; transform: scale(1.045); }
+  .speaker-card:hover .speaker-copy::before { width: 44px; }
 }
 
 @media (max-width: 1120px) {
@@ -676,7 +700,9 @@ mark { padding: .12em .23em .15em; border-radius: var(--radius-mark); color: var
   .expect-grid { grid-template-columns: 1fr; }
   .expect-feature figcaption { min-height: 3.7rem; }
   .expect-tab { min-height: 44px; }
-  .speaker-copy { padding-block: .68rem; }
+  .speaker-copy { padding-inline: .7rem; padding-bottom: .75rem; }
+  .speaker-copy h3 { font-size: .9rem; }
+  .speaker-copy p { font-size: .6rem; letter-spacing: .1em; }
   .footer-main { gap: 25px 12px; }
 }
 @media (max-width: 359px) {
