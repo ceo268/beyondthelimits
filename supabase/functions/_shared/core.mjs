@@ -143,7 +143,8 @@ const reserveErrors = {
 async function createOrder(body, request, env, { rpc, razor, mode }) {
   const hash = await checkoutHash(body.token);
   const { name, email, phone } = validatedCustomer(body);
-  if (!["standard", "premium", "vip"].includes(body.tier) || !Number.isInteger(body.amount)
+  // The database decides which tiers exist and are on sale (summit_reserve returns "closed" otherwise).
+  if (typeof body.tier !== "string" || !/^[a-z_]{2,20}$/.test(body.tier) || !Number.isInteger(body.amount)
       || body.amount < 100 || body.amount > 2_147_483_647) {
     throw new RequestError(400, "invalid_pass", "Choose a valid pass.");
   }

@@ -299,5 +299,17 @@
     }
   }
 
+  // Hidden ₹1 organizer test pass: open the site with #rupee-test. It works only while the
+  // "rupee_test" tier is enabled in the database.
+  if (location.hash === "#rupee-test") {
+    const test = document.createElement("button");
+    test.className = "button button-primary";
+    test.type = "button";
+    test.dataset.pass = "rupee_test";
+    test.textContent = "Organizer test · Buy ₹1 test pass";
+    test.style.cssText = "position:fixed;left:50%;bottom:20px;transform:translateX(-50%);z-index:50;box-shadow:0 8px 30px rgb(0 0 0 / .5)";
+    document.body.append(test);
+  }
+
   $$("[data-pass]").forEach((button) => button.addEventListener("click", () => openPass(button)));
 })();
