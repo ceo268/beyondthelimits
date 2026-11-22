@@ -9,11 +9,12 @@
   <title>Purchases | Beyond the Limits Admin</title>
   <link rel="icon" href="../assets/favicon.png" type="image/png">
   <link rel="stylesheet" href="../css/styles.css?v=20261120">
-  <link rel="stylesheet" href="admin.css">
-  <script src="../js/content.js?v=20261120" defer></script>
+  <link rel="stylesheet" href="admin.css?v=20261122">
+  <script src="../js/content.js?v=20261122" defer></script>
   <script src="../js/config.js?v=20261120" defer></script>
   <script src="../js/api.js?v=20261120" defer></script>
-  <script src="admin.js" defer></script>
+  <script src="admin.js?v=20261122" defer></script>
+  <script src="checkin.js?v=20261122" defer></script>
 </head>
 <body>
   <a class="skip-link" href="#admin-main">Skip to content</a>
@@ -49,6 +50,10 @@
           <a href="#purchases" data-section="purchases">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M4 7a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v3a2 2 0 0 0 0 4v3a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2v-3a2 2 0 0 0 0-4Zm10-2v2m0 3v2m0 3v4"/></svg>
             Purchases
+          </a>
+          <a href="#checkin" data-section="checkin">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M4 8V5a1 1 0 0 1 1-1h3m8 0h3a1 1 0 0 1 1 1v3m0 8v3a1 1 0 0 1-1 1h-3m-8 0H5a1 1 0 0 1-1-1v-3"/><rect x="8" y="8" width="3" height="3"/><rect x="13" y="8" width="3" height="3"/><rect x="8" y="13" width="3" height="3"/><path d="M13 13h3v3"/></svg>
+            Check-in
           </a>
         </nav>
         <a class="admin-site-link text-link" href="../">View summit website</a>
@@ -89,6 +94,37 @@
               <div class="tier-intro"><h2 id="tier-heading">Pass breakdown</h2><p>Confirmed passes by tier</p></div>
               <div class="tier-grid" id="tier-grid"></div>
             </section>
+          </section>
+
+          <section class="purchase-panel checkin-panel" id="checkin" aria-labelledby="checkin-heading">
+            <div class="purchase-top">
+              <div><h2 id="checkin-heading">Gate check-in</h2><p>Scan the QR code in an attendee’s ticket email. Each ticket admits one person, once.</p></div>
+              <p class="checkin-count"><strong id="checkin-count">—</strong><span id="checkin-of"></span></p>
+            </div>
+            <div class="checkin-grid">
+              <div class="scanner">
+                <div class="scanner-frame">
+                  <video id="scanner-video" playsinline muted hidden></video>
+                  <p class="scanner-idle" id="scanner-idle">Camera is off</p>
+                </div>
+                <div class="scanner-actions">
+                  <button class="button button-primary" id="scanner-start" type="button">Start scanning</button>
+                  <button class="button button-secondary" id="scanner-stop" type="button" hidden>Stop camera</button>
+                </div>
+                <form id="manual-checkin" class="manual-checkin">
+                  <label class="admin-field">Or type the ticket number<input name="code" placeholder="1A2B-3C4D" autocomplete="off" autocapitalize="characters" spellcheck="false" maxlength="40" required></label>
+                  <button class="button button-secondary" type="submit">Check in</button>
+                </form>
+              </div>
+              <div class="checkin-result" id="checkin-result" data-state="idle">
+                <div role="status" aria-live="assertive" aria-atomic="true">
+                  <p class="checkin-verdict" id="checkin-verdict">Ready</p>
+                  <p class="checkin-message" id="checkin-message">Start the camera and point it at the attendee’s QR code.</p>
+                </div>
+                <dl class="checkin-details" id="checkin-details"></dl>
+                <button class="button button-secondary" id="checkin-undo" type="button" hidden>Undo this check-in</button>
+              </div>
+            </div>
           </section>
 
           <section class="purchase-panel" id="purchases" aria-labelledby="purchases-heading">

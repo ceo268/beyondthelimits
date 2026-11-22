@@ -1,7 +1,7 @@
 import { databaseRpc } from "./database.mjs";
 import { authorizedWorker, sendTicketEmail, ticketEmailConfigured, ticketEmailMessage } from "./resend.mjs";
 
-export function ticketEmailHandler(env, fetcher = fetch) {
+export function ticketEmailHandler(env, fetcher = fetch, { qrImage } = {}) {
   return async (request) => {
     const headers = { "Cache-Control": "no-store" };
     if (request.method !== "POST") return Response.json({ ok: false }, { status: 405, headers });
@@ -16,7 +16,7 @@ export function ticketEmailHandler(env, fetcher = fetch) {
       const tickets = await rpc("summit_claim_ticket_emails", { p_lease: lease });
       const results = await Promise.allSettled(tickets.map(async (ticket) => {
         const keys = { p_order: ticket.order_id, p_lease: lease };
-        const proposed = ticket.payload || ticketEmailMessage(ticket, env);
+        const proposed = ticket.payload || ticketEmailMessage(ticket, env, { qrImage });
         let result;
         if (!proposed) {
           result = { outcome: "failed", errorCode: "invalid_recipient" };

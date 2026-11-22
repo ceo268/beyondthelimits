@@ -110,3 +110,30 @@ test("Live Mode checkout remains closed while the ticket email configuration is 
   assert.deepEqual(await (await call("catalog")).json(), { mode: "live", tiers: [] });
   assert.equal((await call("create")).status, 503);
 });
+
+test("ticket with a code embeds the entry QR inline and shows the ticket number", () => {
+  const code = "3f9a21c0b7d64e1f8a2b5c6d7e8f9012";
+  let encoded;
+  const qrImage = (text) => { encoded = text; return "R0lGODlhAQABAAAAACw="; };
+  const message = ticketEmailMessage({ ...ticket, ticket_code: code, tier: "vip", phone: "+919876543210", mode: "live" },
+    { ...env, TICKET_ART_BASE_URL: "https://summit.example.test/assets/tickets/" }, { qrImage });
+  assert.equal(encoded, "BTL1:" + code);
+  assert.deepEqual(message.attachments, [{
+    filename: "ticket-qr.gif", content: "R0lGODlhAQABAAAAACw=", content_type: "image/gif", content_id: "ticket-qr",
+  }]);
+  assert.match(message.html, /src="cid:ticket-qr"/);
+  assert.match(message.html, /3F9A-21C0/);
+  assert.match(message.html, /src="https:\/\/summit\.example\.test\/assets\/tickets\/vip\.png"/);
+  assert.match(message.subject, /\(3F9A-21C0\)/);
+  assert.match(message.text, /Ticket no\.: 3F9A-21C0/);
+  assert.doesNotMatch(message.html, /TEST TICKET/);
+});
+
+test("test-mode tickets are clearly marked and a bad QR result is dropped", () => {
+  const message = ticketEmailMessage({ ...ticket, ticket_code: "0".repeat(32), mode: "test" }, env,
+    { qrImage: () => "not base64!" });
+  assert.match(message.subject, /^\[TEST\] /);
+  assert.match(message.html, /TEST TICKET · NOT VALID FOR ENTRY/);
+  assert.equal(message.attachments, undefined);
+  assert.doesNotMatch(message.html, /cid:ticket-qr/);
+});

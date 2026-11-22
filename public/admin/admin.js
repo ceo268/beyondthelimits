@@ -71,7 +71,7 @@ async function accessToken() {
 }
 
 function updateActiveSection() {
-  const active = location.hash === "#purchases" ? "purchases" : "overview";
+  const active = ["#purchases", "#checkin"].includes(location.hash) ? location.hash.slice(1) : "overview";
   nodeList("[data-section]").forEach((link) => {
     if (link.dataset.section === active) link.setAttribute("aria-current", "location");
     else link.removeAttribute("aria-current");
@@ -85,6 +85,8 @@ function toggleResults(show) {
 
 function clearDashboardData() {
   ["confirmed", "net", "pending", "refunds"].forEach((key) => { $("#metric-" + key).textContent = "—"; });
+  $("#checkin-count").textContent = "—";
+  $("#checkin-of").textContent = "";
   $("#tier-grid").replaceChildren();
   $("#orders").replaceChildren();
   $("#order-details").replaceChildren();
@@ -99,6 +101,7 @@ function showLogin(message) {
   page = 0;
   clearTimeout(searchTimer);
   if (orderDialog.open) orderDialog.close();
+  document.dispatchEvent(new Event("summit:reset"));
   clearDashboardData();
   filters.reset();
   mode.value = "test";
@@ -167,6 +170,8 @@ function showOverview(data) {
   $("#metric-net").textContent = api.money(totals.gross_paise - totals.refunded_paise);
   $("#metric-pending").textContent = count.format(totals.pending);
   $("#metric-refunds").textContent = api.money(totals.refunded_paise);
+  $("#checkin-count").textContent = count.format(totals.checked_in ?? 0);
+  $("#checkin-of").textContent = ` of ${count.format(totals.confirmed)} checked in`;
 
   $("#tier-grid").replaceChildren(...data.tiers.map((tier) => {
     const block = el("div", undefined, "tier-metric");
@@ -180,6 +185,10 @@ function showOverview(data) {
     block.append(head, bar);
     return block;
   }));
+}
+
+function ticketNumber(code) {
+  return code.slice(0, 4).toUpperCase() + "-" + code.slice(4, 8).toUpperCase();
 }
 
 function formattedDate(value, precise = false) {
@@ -210,11 +219,13 @@ function showOrder(order) {
     ["Capture recorded", formattedDate(order.paid_at, true)],
     ["Order created", formattedDate(order.created_at, true)],
     ["Last failed attempt", formattedDate(order.last_failed_at, true)],
+    ["Ticket no.", order.ticket_code ? ticketNumber(order.ticket_code) : "—"],
+    ["Checked in", order.checked_in_at ? formattedDate(order.checked_in_at, true) : order.ticket_code ? "Not yet" : "—"],
     ["Summit order ID", order.id],
     ["Razorpay order ID", order.razorpay_order_id || "—"],
     ["Razorpay payment ID", order.razorpay_payment_id || "—"],
   ];
-  if (mode.value === "live") {
+  if (mode.value === "live" || order.ticket_email_status) {
     fields.push(["Ticket email", emailStatusNames[order.ticket_email_status] || "—"]);
     if (order.ticket_email_sent_at) fields.push(["Email accepted at", formattedDate(order.ticket_email_sent_at, true)]);
     if (order.ticket_email_error) fields.push(["Last email error", order.ticket_email_error]);
@@ -327,6 +338,7 @@ mode.addEventListener("change", () => {
   note.textContent = live ? "Live mode is selected. These are real customer transactions."
     : "Test mode is selected. These orders use Razorpay test payments.";
   note.classList.toggle("live", live);
+  document.dispatchEvent(new Event("summit:reset"));
   clearDashboardData();
   reloadFirstPage();
 });

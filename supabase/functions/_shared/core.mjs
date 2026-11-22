@@ -102,15 +102,23 @@ function clients(env, fetcher) {
   return { rpc, razor, mode };
 }
 
+// Indian mobiles may be typed without +91 ("98765 43210", "098765 43210", "91 98765 43210").
+export function normalizedPhone(raw) {
+  const phone = raw.replace(/[ ()-]/g, "");
+  if (/^0?[6-9]\d{9}$/.test(phone)) return "+91" + phone.slice(-10);
+  if (/^91[6-9]\d{9}$/.test(phone)) return "+" + phone;
+  return phone;
+}
+
 function validatedCustomer(input) {
   const name = typeof input.name === "string" ? input.name.trim() : "";
   const email = typeof input.email === "string" ? input.email.trim().toLowerCase() : "";
   const rawPhone = typeof input.phone === "string" ? input.phone.trim() : "";
-  const phone = rawPhone.replace(/[ ()-]/g, "");
+  const phone = normalizedPhone(rawPhone);
   if (name.length < 2 || name.length > 100 || /[\u0000-\u001f\u007f]/.test(name)
       || email.length > 254 || !/^[^\s@<>]+@[^\s@<>]+\.[^\s@<>]+$/.test(email)
       || rawPhone.length > 32 || !/^\+[1-9]\d{7,14}$/.test(phone)) {
-    throw new RequestError(400, "invalid_customer", "Enter your name, a valid email address, and a phone number with country code.");
+    throw new RequestError(400, "invalid_customer", "Enter your full name, a valid email address, and a valid mobile number.");
   }
   return { name, email, phone };
 }

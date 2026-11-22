@@ -165,3 +165,13 @@ test("refund processing tracks a stable refund ID and ignores uncaptured auto-re
   assert.equal((await handle(webhook(event, "evt_auto"))).status, 200);
   assert.equal(callLog.length, 1);
 });
+
+test("Indian mobile numbers are accepted without the +91 prefix", async () => {
+  const { normalizedPhone } = await import("../supabase/functions/_shared/core.mjs");
+  assert.equal(normalizedPhone("98765 43210"), "+919876543210");
+  assert.equal(normalizedPhone("098765-43210"), "+919876543210");
+  assert.equal(normalizedPhone("91 98765 43210"), "+919876543210");
+  assert.equal(normalizedPhone("+91 98765 43210"), "+919876543210");
+  assert.equal(normalizedPhone("+1 (415) 555-0100"), "+14155550100");
+  assert.equal(normalizedPhone("12345"), "12345");
+});

@@ -11,7 +11,7 @@ Static summit website + Supabase backend + Razorpay checkout. No build step.
 | `.vercelignore` | Keeps `supabase/`, `tests/` and any `.env` out of the Vercel upload. |
 | `supabase/migrations/` | Private tables, order/payment functions, organizer allowlist. |
 | `supabase/functions/` | `checkout`, `razorpay-webhook` (signed), `ticket-email` (Resend). |
-| `tests/` | `node --test tests/*.test.mjs` (payment verification, webhook, email). |
+| `tests/` | `node --test tests/*.test.mjs` (payment verification, webhook, email). `tests/checkin.sql` checks ticket codes and check-in. |
 
 ## How load and cost are handled (≈1 lakh views/week)
 
@@ -49,6 +49,14 @@ npx vercel --prod   # production deploy
 ## Backend status
 
 The Supabase project in `public/js/config.js` already has the migrations applied and the functions deployed, running in Razorpay **Test Mode**. No pass is on sale yet: the catalog is empty because `charge_paise` hasn't been set.
+
+## Tickets, QR codes and gate check-in
+
+- **Buyer details:** name, email and mobile number are all required. A 10-digit Indian mobile is accepted without `+91`.
+- **Ticket email:** once Razorpay confirms the payment, a cron job sends the ticket through Resend within about 30 seconds. The ticket includes the buyer's details, a ticket number (for example `DFDC-4FF1`) and an entry QR code embedded in the email. The QR holds only `BTL1:` plus the order's random 128-bit ticket code.
+- **Check-in:** go to `/admin/` → **Check-in** → **Start scanning**, and point the phone at the attendee's QR code. The first scan admits the ticket; a second scan shows **Already checked in**, with the time and the organizer who scanned it. Refunded, unpaid and test tickets are refused. You can also type the ticket number. **Undo** reverses a mistaken scan. The camera works on HTTPS only (your Vercel domain), and staff need an organizer login.
+- **Test emails:** `summit_private.settings.email_test_tickets` (currently `true`) also emails tickets for Razorpay *test* payments, marked "TEST TICKET · NOT VALID FOR ENTRY", so you can rehearse the whole flow. Turn it off with `update summit_private.settings set email_test_tickets = false;`.
+- **Ticket artwork (optional):** put `standard.png`, `premium.png` and `vip.png` (1120×400) in `public/assets/tickets/`, deploy, then set the Supabase secret `TICKET_ART_BASE_URL=https://yourdomain.com/assets/tickets` and redeploy `ticket-email`. Each email then shows the artwork for its pass above the ticket.
 
 ## Going live checklist
 
