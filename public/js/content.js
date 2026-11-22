@@ -108,7 +108,7 @@ const CONTENT = {
     comingSoon: "Tickets on Sale Soon",
     // Sales switch. While false, the page makes no backend calls at all.
     // Set to true only after pass prices are enabled in Supabase (see README).
-    salesOpen: false,
+    salesOpen: true,
     ticketButton: "Get Your Pass",
     tiers: [
       {
