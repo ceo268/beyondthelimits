@@ -337,21 +337,34 @@ mark { padding: .12em .23em .15em; border-radius: var(--radius-mark); color: var
 .expect-tab[aria-selected="true"] span { color: inherit; }
 .expect-feature figcaption { padding: .8rem .15rem 0; min-height: 3.9rem; color: var(--muted); font-size: .925rem; }
 .expect-art {
+  display: grid;
+  gap: 3px;
   aspect-ratio: 1.45;
-  background: radial-gradient(ellipse at 50% 50%, var(--gold-glow), var(--clear) 72%), var(--black);
+  border-color: rgb(212 175 55 / .35);
+  background: var(--black);
 }
-.expect-art::before, .expect-art::after {
-  position: absolute;
-  inset: var(--art-inset, 0);
+.expect-art-0 { grid-template-columns: repeat(3, 1fr); }
+.expect-art-1 { grid-template-columns: repeat(4, 1fr); }
+.expect-art-2 { grid-template-columns: repeat(3, 1fr); grid-template-rows: 1fr 1fr; }
+.expect-art-3 { grid-template-columns: 1.35fr 1fr; grid-template-rows: 1fr 1fr; }
+.expect-art-3 .expect-tile:first-child { grid-row: 1 / -1; }
+.expect-tile { position: relative; min-width: 0; min-height: 0; overflow: hidden; background: radial-gradient(ellipse at 50% 30%, rgb(212 175 55 / .18), var(--clear) 70%), #14120e; }
+.expect-tile .slot-image { object-position: 50% 28%; transition: transform 1.2s cubic-bezier(.2, .7, .2, 1); }
+.expect-feature:not([hidden]) .expect-tile .slot-image { animation: expect-in .7s ease both; }
+.expect-art::after {
   content: "";
-  background: var(--art-pattern);
-  transform: var(--art-transform, none);
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  pointer-events: none;
+  background: linear-gradient(to top, rgb(0 0 0 / .9) 0%, rgb(0 0 0 / .45) 30%, rgb(0 0 0 / 0) 58%),
+    linear-gradient(140deg, rgb(212 175 55 / .16), var(--clear) 40%);
 }
-.expect-art::after { inset: 0; background: linear-gradient(127deg, var(--shadow), var(--clear) 50%, var(--shade)); transform: none; }
-.expect-art-0 { --art-pattern: repeating-radial-gradient(ellipse at 50% 100%, var(--gold-light), var(--gold-dim) 2px, var(--black) 7px, var(--gold-dim) 13px, var(--black) 17px); --art-inset: 8% -10% -35%; }
-.expect-art-1 { --art-pattern: repeating-linear-gradient(32deg, var(--gold-dim) 0 3px, var(--black) 6px 15px, var(--gold-dark) 16px 17px, var(--black) 19px); --art-transform: perspective(340px) rotateY(-30deg) scale(1.5); }
-.expect-art-2 { --art-pattern: repeating-radial-gradient(circle at 29% 63%, var(--clear) 0 10px, var(--gold-dark) 12px, var(--clear) 14px 21px), repeating-radial-gradient(circle at 76% 42%, var(--black) 0 10px, var(--gold-dim) 12px, var(--black) 14px 21px); }
-.expect-art-3 { --art-pattern: repeating-linear-gradient(90deg, var(--gold-dim), var(--black) 22px, var(--gold) 23px, var(--gold-dim) 25px); --art-transform: perspective(220px) rotateX(37deg) rotateZ(-20deg) scale(1.5); }
+.expect-art-caption { position: absolute; inset: auto 0 0; z-index: 3; padding: clamp(14px, 2vw, 24px); }
+.expect-art-caption span { display: inline-block; margin-bottom: .45rem; padding: .25rem .6rem; border-radius: var(--radius-pill); background: var(--gold-gradient); color: var(--black); font-size: .68rem; font-weight: 800; letter-spacing: .12em; text-transform: uppercase; }
+.expect-art-caption strong { display: block; color: var(--text); font: 700 clamp(1.4rem, 2.6vw, 2.15rem)/1.05 var(--font-display); letter-spacing: -.03em; text-shadow: 0 2px 18px rgb(0 0 0 / .6); }
+@keyframes expect-in { from { opacity: 0; transform: scale(1.08); } to { opacity: 1; transform: none; } }
+@media (hover: hover) { .expect-art:hover .slot-image { transform: scale(1.05); } }
 .expect-actions { display: grid; position: relative; gap: 12px; }
 .expect-sparkle { position: absolute; right: -.7rem; top: -30px; width: 40px; height: 40px; z-index: 1; color: var(--gold-light); rotate: 18deg; pointer-events: none; }
 .action-card {
@@ -384,8 +397,7 @@ mark { padding: .12em .23em .15em; border-radius: var(--radius-mark); color: var
 @keyframes marquee { to { transform: translateX(-50%); } }
 @keyframes shimmer { 0%, 71% { background-position: 175% 0; } 93%, 100% { background-position: -75% 0; } }
 
-/* Speaker lineup: uniform 4:5 portraits in a warm gold monochrome that turns to full colour on hover
-   (or, on touch screens, as the card scrolls through the middle of the screen). */
+/* Speaker lineup: uniform 4:5 full-colour portraits with the name over a dark fade. */
 .speakers { background: radial-gradient(ellipse at 91% 0%, var(--gold-glow), var(--clear) 37%), var(--panel); }
 .speaker-grid {
   display: grid;
@@ -441,8 +453,7 @@ mark { padding: .12em .23em .15em; border-radius: var(--radius-mark); color: var
 }
 .speaker-portrait .slot-image {
   object-position: 50% 30%;
-  filter: grayscale(1) sepia(.3) contrast(1.08) brightness(.9);
-  transition: filter .6s ease, transform .8s cubic-bezier(.2, .7, .2, 1);
+  transition: transform .8s cubic-bezier(.2, .7, .2, 1);
 }
 .speaker-copy {
   position: absolute;
@@ -463,8 +474,6 @@ mark { padding: .12em .23em .15em; border-radius: var(--radius-mark); color: var
 }
 .speaker-copy h3 { color: var(--text); font-size: clamp(.98rem, 1.35vw, 1.22rem); font-weight: 700; letter-spacing: -.02em; line-height: 1.18; overflow-wrap: anywhere; text-shadow: 0 1px 12px rgb(0 0 0 / .6); }
 .speaker-copy p { margin-top: .3rem; color: var(--gold-light); font-size: .66rem; font-weight: 700; letter-spacing: .14em; line-height: 1.35; text-transform: uppercase; overflow-wrap: anywhere; }
-.speaker-card.in-focus .slot-image { filter: none; }
-.speaker-card.in-focus .speaker-copy::before { width: 44px; }
 
 /* Pass tickets: square face, perforation and detachable-looking stub */
 .passes { margin-block: var(--section-gap); width: min(1272px, calc(100% - clamp(40px, 8vw, 120px))); }
@@ -623,7 +632,7 @@ mark { padding: .12em .23em .15em; border-radius: var(--radius-mark); color: var
   .button:not(:disabled):hover, .action-card:hover { transform: translateY(-3px); }
   .button-secondary:hover { border-color: var(--gold-light); }
   .speaker-card:hover { translate: 0 -6px; border-color: var(--gold); box-shadow: 0 18px 40px rgb(0 0 0 / .55), 0 0 28px rgb(212 175 55 / .16); }
-  .speaker-card:hover .slot-image { filter: none; transform: scale(1.045); }
+  .speaker-card:hover .slot-image { transform: scale(1.045); }
   .speaker-card:hover .speaker-copy::before { width: 44px; }
 }
 

@@ -109,6 +109,13 @@ function renderHero() {
   }
 }
 
+// Speaker photos for each "What to Expect" collage, picked by file name from the lineup.
+function expectPhotos(index) {
+  return (expect.items[index].photos || [])
+    .map((name) => speakers.find(({ photo }) => photo?.endsWith("/" + name + ".webp"))?.photo)
+    .filter(Boolean);
+}
+
 function renderAboutAndExpect() {
   $("#stats").setAttribute("aria-label", ui.statsLabel);
   $("#stats").innerHTML = `
@@ -133,7 +140,10 @@ function renderAboutAndExpect() {
         ${expect.items.map(({ description }, i) => `
           <div class="expect-feature" id="expect-panel-${i}" role="tabpanel" aria-labelledby="expect-tab-${i}" tabindex="0"${i ? " hidden" : ""}>
             <figure>
-              <div class="art-frame expect-art expect-art-${i % 4}" aria-hidden="true"></div>
+              <div class="art-frame expect-art expect-art-${i % 4}" aria-hidden="true">
+                ${expectPhotos(i).map((photo) => `<div class="expect-tile">${optionalImage(photo)}</div>`).join("")}
+                <div class="expect-art-caption"><span>${safe(expect.tagline)}</span><strong>${safe(expect.items[i].title)}</strong></div>
+              </div>
               <figcaption>${safe(description)}</figcaption>
             </figure>
           </div>`).join("")}
@@ -311,6 +321,7 @@ function bindTabs() {
       tab.tabIndex = index === i ? 0 : -1;
       panels[i].hidden = index !== i;
     });
+    $$("img[data-photo]", panels[index]).forEach(loadImage);
     if (focus) tabs[index].focus();
   }
   tabs.forEach((tab, i) => {
@@ -353,13 +364,6 @@ function bindMotionAndImages() {
   }, { rootMargin: "100px" });
   photos.forEach((img) => imageObserver.observe(img.parentElement));
 
-  // Touch screens have no hover: bring each speaker photo into full colour while it crosses the middle of the screen.
-  if (!matchMedia("(hover: hover)").matches) {
-    const focusObserver = new IntersectionObserver((entries) => {
-      entries.forEach(({ isIntersecting, target }) => target.classList.toggle("in-focus", isIntersecting));
-    }, { rootMargin: "-38% 0px -38% 0px" });
-    $$(".speaker-card").forEach((card) => focusObserver.observe(card));
-  }
 
   if (motion.matches) return;
   const revealObserver = new IntersectionObserver((entries) => {

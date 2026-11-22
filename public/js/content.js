@@ -69,11 +69,17 @@ const CONTENT = {
   expect: {
     heading: "What to",
     highlight: "Expect",
+    tagline: "7 Feb 2027 · Chennai",
+    // photos: speaker photo file names (without .webp) shown in each tab's collage.
     items: [
-      { title: "Keynotes", description: "Hear speakers share what they’ve learned from building and leading businesses." },
-      { title: "Panel Discussions", description: "Hear different perspectives on the decisions and trade-offs that come with growing a business." },
-      { title: "Networking", description: "Meet people working on different problems, exchange ideas and find conversations worth continuing." },
-      { title: "Masterclasses", description: "Work through practical ideas you can take back to your business." },
+      { title: "Keynotes", description: "Hear speakers share what they’ve learned from building and leading businesses.",
+        photos: ["ck-kumaravel", "namitha-marimuthu", "john-vijay"] },
+      { title: "Panel Discussions", description: "Hear different perspectives on the decisions and trade-offs that come with growing a business.",
+        photos: ["murali-sundaram", "aarthi", "vijay-kapoor", "dr-as-reyas"] },
+      { title: "Networking", description: "Meet people working on different problems, exchange ideas and find conversations worth continuing.",
+        photos: ["irfan", "daisy-morgan", "raja-rajan", "anil-semiya", "tp-showkath", "arun-guvi"] },
+      { title: "Masterclasses", description: "Work through practical ideas you can take back to your business.",
+        photos: ["abdul-nabeel", "kolapasi", "salem-rr-biryani"] },
     ],
   },
   values: ["Network", "Learn", "Grow", "Go Beyond"],
