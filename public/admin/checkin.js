@@ -37,10 +37,8 @@
     refunded: ["bad", "Refunded ticket", () => "This ticket was refunded. It is not valid for entry."],
     not_paid: ["bad", "Payment not completed", () => "This order was never paid. Do not admit."],
     not_found: ["bad", "Ticket not found", () => "No ticket matches this code. Ask for the ticket email, or search their name under Purchases."],
-    wrong_mode: ["bad", "Wrong mode", () => mode.value === "live"
-      ? "This is a TEST ticket. It is not valid for entry."
-      : "This is a live ticket. Switch the dashboard to Live mode to check it in."],
-    ambiguous: ["warn", "More than one match", () => "Type more characters of the code, or scan the QR code."],
+    wrong_mode: ["bad", "Test ticket", () => "This is a TEST ticket. It is not valid for entry."],
+    ambiguous: ["warn", "More than one match", () => "Type the BTL ticket number instead, or scan the QR code."],
     invalid: ["bad", "Not a summit ticket", () => "This QR code isn’t a Beyond the Limits ticket."],
     offline: ["bad", "Couldn’t reach the server", () => "Check the internet connection, then scan again."],
   };
@@ -68,7 +66,7 @@
     details.replaceChildren(...(ticket ? [
       ["Name", ticket.name],
       ["Pass", ticket.pass_label],
-      ["Ticket no.", ticketNumber(ticket.ticket_code)],
+      ["Ticket no.", ticket.ticket_label || ticketNumber(ticket.ticket_code)],
       ["Phone", ticket.phone],
       ["Email", ticket.email],
       ["Checked in", ticket.checked_in_at ? formattedDate(ticket.checked_in_at, true) : "Not yet"],

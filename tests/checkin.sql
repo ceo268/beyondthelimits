@@ -8,6 +8,8 @@ declare
   refunded uuid := 'e1a2b3c4-d5e6-4f70-8192-a3b4c5d6e7f8';
   code text;
   reply jsonb;
+  label text;
+  first_no integer;
 begin
   if has_function_privilege('anon', 'public.summit_admin_check_in(text,text,text)', 'execute') then
     raise exception 'Anonymous visitors can call check-in';
@@ -65,6 +67,25 @@ begin
   if public.summit_admin_check_in(code, 'live', 'undo')->>'result' <> 'undone'
      or public.summit_admin_check_in(code, 'live')->>'result' <> 'admitted' then
     raise exception 'Undo then re-admit failed';
+  end if;
+
+  -- Countable numbers: live captures get BTL-nnn in payment order, test captures TEST-nnn.
+  select ticket_no, summit_private.ticket_label(mode, ticket_no) into first_no, label
+    from summit_private.orders where id = paid_live;
+  if label !~ '^BTL-[0-9]{3,}$'
+     or (select ticket_no from summit_private.orders where id = refunded) <> first_no + 1 then
+    raise exception 'Live ticket numbers are not sequential: %', label;
+  end if;
+  if public.summit_admin_check_in(lower(label), 'live')->>'result' <> 'already'
+     or public.summit_admin_check_in(first_no::text, 'live', 'lookup') #>> '{ticket,ticket_label}' <> label then
+    raise exception 'Lookup by ticket number failed';
+  end if;
+  select summit_private.ticket_label(mode, ticket_no) into label from summit_private.orders where id = paid_test;
+  if label !~ '^TEST-[0-9]{3,}$' or public.summit_admin_check_in(label, 'live')->>'result' <> 'wrong_mode' then
+    raise exception 'A TEST number must not admit at the live gate: %', label;
+  end if;
+  if jsonb_array_length(public.summit_admin_export('live')) < 2 then
+    raise exception 'Export is missing paid tickets';
   end if;
 
   select ticket_code into code from summit_private.orders where id = paid_test;

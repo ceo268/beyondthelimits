@@ -12,7 +12,8 @@ const filters = $("#filters");
 const workspace = $("#purchases");
 const orderDialog = $("#order-dialog");
 const ordersStatus = $("#orders-status");
-const mode = $("#mode");
+// The panel shows live sales only. Test-mode data stays in the database but is not listed.
+const mode = { value: "live" };
 const statusNames = {
   paid: "Paid", pending: "Pending", failed: "Failed",
   refunded: "Refunded", partially_refunded: "Partially refunded",
@@ -84,7 +85,7 @@ function toggleResults(show) {
 }
 
 function clearDashboardData() {
-  ["confirmed", "net", "pending", "refunds"].forEach((key) => { $("#metric-" + key).textContent = "—"; });
+  ["confirmed", "net", "checkedin", "refunds"].forEach((key) => { $("#metric-" + key).textContent = "—"; });
   $("#checkin-count").textContent = "—";
   $("#checkin-of").textContent = "";
   $("#tier-grid").replaceChildren();
@@ -104,9 +105,6 @@ function showLogin(message) {
   document.dispatchEvent(new Event("summit:reset"));
   clearDashboardData();
   filters.reset();
-  mode.value = "test";
-  $("#mode-note").textContent = "Test mode is selected. These orders use Razorpay test payments.";
-  $("#mode-note").classList.remove("live");
   workspace.removeAttribute("aria-busy");
   layout.hidden = true;
   login.hidden = false;
@@ -168,7 +166,7 @@ function showOverview(data) {
   const totals = data.totals;
   $("#metric-confirmed").textContent = count.format(totals.confirmed);
   $("#metric-net").textContent = api.money(totals.gross_paise - totals.refunded_paise);
-  $("#metric-pending").textContent = count.format(totals.pending);
+  $("#metric-checkedin").textContent = count.format(totals.checked_in ?? 0);
   $("#metric-refunds").textContent = api.money(totals.refunded_paise);
   $("#checkin-count").textContent = count.format(totals.checked_in ?? 0);
   $("#checkin-of").textContent = ` of ${count.format(totals.confirmed)} checked in`;
@@ -180,7 +178,7 @@ function showOverview(data) {
     const fill = el("span");
     fill.style.width = (totals.confirmed ? Math.min(100, 100 * tier.confirmed / totals.confirmed) : 0) + "%";
     bar.setAttribute("aria-hidden", "true");
-    head.append(el("span", tier.label), el("strong", count.format(tier.confirmed)));
+    head.append(el("span", tier.label), el("strong", `${count.format(tier.confirmed)} sold · ${count.format(tier.checked_in ?? 0)} in`));
     bar.append(fill);
     block.append(head, bar);
     return block;
@@ -219,13 +217,13 @@ function showOrder(order) {
     ["Capture recorded", formattedDate(order.paid_at, true)],
     ["Order created", formattedDate(order.created_at, true)],
     ["Last failed attempt", formattedDate(order.last_failed_at, true)],
-    ["Ticket no.", order.ticket_code ? ticketNumber(order.ticket_code) : "—"],
+    ["Ticket no.", order.ticket_label || (order.ticket_code ? ticketNumber(order.ticket_code) : "—")],
     ["Checked in", order.checked_in_at ? formattedDate(order.checked_in_at, true) : order.ticket_code ? "Not yet" : "—"],
     ["Summit order ID", order.id],
     ["Razorpay order ID", order.razorpay_order_id || "—"],
     ["Razorpay payment ID", order.razorpay_payment_id || "—"],
   ];
-  if (mode.value === "live" || order.ticket_email_status) {
+  if (order.paid_at || order.ticket_email_status) {
     fields.push(["Ticket email", emailStatusNames[order.ticket_email_status] || "—"]);
     if (order.ticket_email_sent_at) fields.push(["Email accepted at", formattedDate(order.ticket_email_sent_at, true)]);
     if (order.ticket_email_error) fields.push(["Last email error", order.ticket_email_error]);
@@ -259,7 +257,8 @@ function renderOrders(data, filtered) {
     button.setAttribute("aria-label", "View order for " + order.customer_name);
     button.addEventListener("click", () => showOrder(order));
     actions.append(button);
-    line.append(customer, el("td", order.pass_label), currentStatus,
+    if (order.checked_in_at) currentStatus.append(el("span", "Checked in", "status-tag checked-in"));
+    line.append(el("td", order.ticket_label || "—", "ticket-cell"), customer, el("td", order.pass_label), currentStatus,
       el("td", api.money(order.amount_paise), "money-cell"), el("td", formattedDate(order.created_at)), actions);
     return line;
   }));
@@ -269,7 +268,7 @@ function renderOrders(data, filtered) {
     : `${count.format(seen + 1)}–${count.format(seen + data.rows.length)} of ${count.format(data.count)} purchases`;
   $("#prev-page").disabled = page === 0;
   $("#next-page").disabled = seen + data.rows.length >= data.count;
-  ordersStatus.textContent = hasRows ? "" : filtered ? "No purchases match these filters." : "No purchases in this mode yet.";
+  ordersStatus.textContent = hasRows ? "" : filtered ? "No purchases match these filters." : "No tickets sold yet.";
   toggleResults(hasRows);
 }
 
@@ -312,6 +311,45 @@ async function loadDashboard() {
   }
 }
 
+function csvCell(value) {
+  const text = value === null || value === undefined ? "" : String(value);
+  // Prefix formula-like values so spreadsheet apps treat them as text.
+  const safe = /^[=+\-@\t\r]/.test(text) ? "'" + text : text;
+  return /[",\n\r]/.test(safe) ? '"' + safe.replace(/"/g, '""') + '"' : safe;
+}
+
+async function exportOrders() {
+  const button = $("#export-orders");
+  button.disabled = true;
+  ordersStatus.textContent = "Preparing the attendee list…";
+  try {
+    const rows = await api.admin("summit_admin_export", { p_mode: mode.value }, await accessToken());
+    const header = ["Ticket", "Name", "Email", "Phone", "Pass", "Amount (INR)", "Refunded (INR)", "Status",
+      "Paid at", "Checked in at", "Ticket email", "Razorpay payment ID"];
+    const lines = rows.map((row) => [row.ticket, row.name, row.email, row.phone, row.pass,
+      (row.amount_paise / 100).toFixed(2), (row.refunded_paise / 100).toFixed(2), statusNames[row.status] || row.status,
+      formattedDate(row.paid_at, true), row.checked_in_at ? formattedDate(row.checked_in_at, true) : "",
+      emailStatusNames[row.email_status] || "", row.razorpay_payment_id].map(csvCell).join(","));
+    const blob = new Blob(["\ufeff" + [header.join(","), ...lines].join("\r\n")], { type: "text/csv;charset=utf-8" });
+    const link = el("a");
+    link.href = URL.createObjectURL(blob);
+    link.download = `beyond-the-limits-attendees-${new Date().toISOString().slice(0, 10)}.csv`;
+    document.body.append(link);
+    link.click();
+    link.remove();
+    setTimeout(() => URL.revokeObjectURL(link.href), 1000);
+    ordersStatus.textContent = rows.length ? "" : "No paid tickets to export yet.";
+  } catch (error) {
+    if (error.status === 401 || error.status === 403 || error.code === "42501") {
+      showLogin("Organizer access has ended. Sign in to continue.");
+      return;
+    }
+    ordersStatus.textContent = "The attendee list could not be exported. Please try again.";
+  } finally {
+    button.disabled = false;
+  }
+}
+
 function reloadFirstPage() {
   clearTimeout(searchTimer);
   page = 0;
@@ -332,16 +370,7 @@ $("#signout").addEventListener("click", () => {
   void revoke(token);
 });
 $("#refresh-orders").addEventListener("click", loadDashboard);
-mode.addEventListener("change", () => {
-  const live = mode.value === "live";
-  const note = $("#mode-note");
-  note.textContent = live ? "Live mode is selected. These are real customer transactions."
-    : "Test mode is selected. These orders use Razorpay test payments.";
-  note.classList.toggle("live", live);
-  document.dispatchEvent(new Event("summit:reset"));
-  clearDashboardData();
-  reloadFirstPage();
-});
+$("#export-orders").addEventListener("click", exportOrders);
 filters.addEventListener("submit", (event) => {
   event.preventDefault();
   reloadFirstPage();

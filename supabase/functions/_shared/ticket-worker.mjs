@@ -1,7 +1,7 @@
 import { databaseRpc } from "./database.mjs";
 import { authorizedWorker, sendTicketEmail, ticketEmailConfigured, ticketEmailMessage } from "./resend.mjs";
 
-export function ticketEmailHandler(env, fetcher = fetch, { qrImage } = {}) {
+export function ticketEmailHandler(env, fetcher = fetch, { qrImage, renderPdf } = {}) {
   return async (request) => {
     const headers = { "Cache-Control": "no-store" };
     if (request.method !== "POST") return Response.json({ ok: false }, { status: 405, headers });
@@ -16,7 +16,16 @@ export function ticketEmailHandler(env, fetcher = fetch, { qrImage } = {}) {
       const tickets = await rpc("summit_claim_ticket_emails", { p_lease: lease });
       const results = await Promise.allSettled(tickets.map(async (ticket) => {
         const keys = { p_order: ticket.order_id, p_lease: lease };
-        const proposed = ticket.payload || ticketEmailMessage(ticket, env, { qrImage });
+        let pdf = null;
+        if (!ticket.payload && renderPdf) {
+          try {
+            pdf = await renderPdf(ticket);
+          } catch (error) {
+            // Still send the email (with its QR) if the PDF can't be built.
+            console.error("Ticket PDF failed:", error instanceof Error ? error.message : "unknown");
+          }
+        }
+        const proposed = ticket.payload || ticketEmailMessage(ticket, env, { qrImage, pdf });
         let result;
         if (!proposed) {
           result = { outcome: "failed", errorCode: "invalid_recipient" };

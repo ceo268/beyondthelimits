@@ -53,6 +53,9 @@ The Supabase project in `public/js/config.js` already has the migrations applied
 ## Tickets, QR codes and gate check-in
 
 - **Buyer details:** name, email and mobile number are all required. A 10-digit Indian mobile is accepted without `+91`.
+- **Ticket numbers:** every paid live order gets the next number in payment order: `BTL-001`, `BTL-002`, … (test payments get `TEST-001`, …). Numbers are never reused, so a refund leaves a gap.
+- **PDF ticket:** each ticket email attaches `BTL-xxx-ticket.pdf` (A5, printable) with the logo, buyer details, pass, number, entry QR and "1 ticket admits only 1 person".
+- **Admin panel:** shows live sales only, with ticket numbers, check-in status, a "Checked in" filter and **Export CSV** (the full attendee list). At the gate you can type either `BTL-007` or scan the QR.
 - **Ticket email:** once Razorpay confirms the payment, a cron job sends the ticket through Resend within about 30 seconds. The ticket includes the buyer's details, a ticket number (for example `DFDC-4FF1`) and an entry QR code embedded in the email. The QR holds only `BTL1:` plus the order's random 128-bit ticket code.
 - **Check-in:** go to `/admin/` → **Check-in** → **Start scanning**, and point the phone at the attendee's QR code. The first scan admits the ticket; a second scan shows **Already checked in**, with the time and the organizer who scanned it. Refunded, unpaid and test tickets are refused. You can also type the ticket number. **Undo** reverses a mistaken scan. The camera works on HTTPS only (your Vercel domain), and staff need an organizer login.
 - **Test emails:** `summit_private.settings.email_test_tickets` (currently `true`) also emails tickets for Razorpay *test* payments, marked "TEST TICKET · NOT VALID FOR ENTRY", so you can rehearse the whole flow. Turn it off with `update summit_private.settings set email_test_tickets = false;`.

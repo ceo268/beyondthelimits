@@ -39,8 +39,8 @@ export function ticketNumber(code) {
   return code.slice(0, 4).toUpperCase() + "-" + code.slice(4, 8).toUpperCase();
 }
 
-// qrImage(text) returns a base64 GIF/PNG of a QR code. It is injected by the Deno entry point.
-export function ticketEmailMessage(ticket, env, { qrImage } = {}) {
+// qrImage(text) returns a base64 GIF/PNG of a QR code; pdf is the base64 PDF ticket. Both come from the Deno entry point.
+export function ticketEmailMessage(ticket, env, { qrImage, pdf } = {}) {
   if (!emailPattern.test(ticket.email)) return null;
   const eventDate = env.TICKET_EVENT_DATE?.trim() || "7 February 2027";
   const venue = env.TICKET_EVENT_VENUE?.trim() || "Sir Mutha Venkatasubba Rao Concert Hall";
@@ -48,7 +48,11 @@ export function ticketEmailMessage(ticket, env, { qrImage } = {}) {
   const brand = "Beyond the Limits Business Summit";
   const testTicket = ticket.mode === "test";
   const code = ticketCode.test(ticket.ticket_code || "") ? ticket.ticket_code : null;
-  const number = code ? ticketNumber(code) : null;
+  const label = /^(BTL|TEST)-\d{3,}$/.test(ticket.ticket_label || "") ? ticket.ticket_label : null;
+  const number = label || (code ? ticketNumber(code) : null);
+  const pdfAttachment = typeof pdf === "string" && pdf.length > 100 && base64.test(pdf)
+    ? { filename: `${label || "Beyond-the-Limits"}-ticket.pdf`, content: pdf, content_type: "application/pdf" }
+    : null;
   const qr = code && qrImage ? qrImage(qrPrefix + code) : null;
   const qrAttachment = typeof qr === "string" && base64.test(qr)
     ? { filename: "ticket-qr.gif", content: qr, content_type: qr.startsWith("iVBOR") ? "image/png" : "image/gif", content_id: "ticket-qr" }
@@ -81,18 +85,19 @@ export function ticketEmailMessage(ticket, env, { qrImage } = {}) {
         ${qrAttachment ? `<img src="cid:ticket-qr" width="220" height="220" alt="Entry QR code for ticket ${escape(number)}" style="display:block;width:220px;height:220px;border:8px solid #ffffff;border-radius:6px">` : ""}
         <p style="margin:14px 0 2px;font-size:12px;letter-spacing:2px;color:#7a6a45;text-transform:uppercase">Ticket no.</p>
         <p style="margin:0;font-size:24px;font-weight:bold;letter-spacing:3px;color:#1b1710;font-family:'Courier New',monospace">${escape(number)}</p>
-        <p style="margin:12px 0 0;font-size:13px;line-height:1.5;color:#4a3f28">Show this QR code at the entrance. It admits one person, once.<br>Please don’t share it.</p>
+        <p style="margin:12px 0 0;font-size:13px;line-height:1.5;color:#4a3f28">Show this QR code (or the attached PDF) at the entrance. It admits one person, once.<br>Please don’t share it.</p>
       </td></tr>` : "";
 
   return {
     from: env.RESEND_FROM_EMAIL,
     to: [ticket.email],
     ...(replyTo && emailPattern.test(replyTo) ? { reply_to: replyTo } : {}),
-    subject: `${testTicket ? "[TEST] " : ""}Your ${ticket.pass_label}${number ? ` (${number})` : ""} · Beyond the Limits`,
+    subject: `${testTicket ? "[TEST] " : ""}Your ${ticket.pass_label}${number ? ` · ${number}` : ""} · Beyond the Limits`,
     text: [
       ...(testTicket ? ["TEST TICKET · NOT VALID FOR ENTRY", ""] : []),
       brand, `${ticket.pass_label} · Admit one`, "",
-      `Hi ${ticket.name}, your booking is confirmed. Keep this email as your ticket.`, "",
+      `Hi ${ticket.name}, your booking is confirmed.${pdfAttachment ? " Your ticket is attached as a PDF." : " Keep this email as your ticket."}`,
+      "1 ticket admits only 1 person.", "",
       ...details.map(([label, value]) => `${label}: ${value}`), "",
       number ? "Show the QR code in this email at the entrance. It admits one person, once."
         : "Please bring this email or a printout to check-in.",
@@ -108,13 +113,14 @@ export function ticketEmailMessage(ticket, env, { qrImage } = {}) {
         <p style="margin:0;font-size:14px">Admit one · ${escape(eventDate)}</p>
       </td></tr>
       <tr><td style="padding:24px 24px 18px">
-        <p style="margin:0 0 14px;font-size:16px;line-height:1.5">Hi ${escape(ticket.name)}, your booking is confirmed. Keep this email as your ticket.</p>
+        <p style="margin:0 0 14px;font-size:16px;line-height:1.5">Hi ${escape(ticket.name)}, your booking is confirmed. ${pdfAttachment ? "Your ticket is attached as a PDF. You can print it or show it on your phone." : "Keep this email as your ticket."}</p>
+        <p style="margin:0 0 16px;padding:10px 14px;background:#17140d;color:#f3e08c;border-radius:8px;font-size:14px;font-weight:bold;text-align:center">1 ticket admits only 1 person</p>
         <table role="presentation" width="100%" cellpadding="0" cellspacing="0">${rows}</table>
       </td></tr>${qrRow}
       </table>
       <p style="margin:14px 0 0;font-size:12px;color:#7a6a45">${escape(brand)} · ${escape(venue)}</p>
       </td></tr></table></body></html>`,
-    ...(qrAttachment ? { attachments: [qrAttachment] } : {}),
+    ...(qrAttachment || pdfAttachment ? { attachments: [qrAttachment, pdfAttachment].filter(Boolean) } : {}),
   };
 }
 

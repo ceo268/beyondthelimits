@@ -124,7 +124,7 @@ test("ticket with a code embeds the entry QR inline and shows the ticket number"
   assert.match(message.html, /src="cid:ticket-qr"/);
   assert.match(message.html, /3F9A-21C0/);
   assert.match(message.html, /src="https:\/\/summit\.example\.test\/assets\/tickets\/vip\.png"/);
-  assert.match(message.subject, /\(3F9A-21C0\)/);
+  assert.match(message.subject, / · 3F9A-21C0 · /);
   assert.match(message.text, /Ticket no\.: 3F9A-21C0/);
   assert.doesNotMatch(message.html, /TEST TICKET/);
 });
@@ -136,4 +136,45 @@ test("test-mode tickets are clearly marked and a bad QR result is dropped", () =
   assert.match(message.html, /TEST TICKET · NOT VALID FOR ENTRY/);
   assert.equal(message.attachments, undefined);
   assert.doesNotMatch(message.html, /cid:ticket-qr/);
+});
+
+test("BTL number, PDF attachment and the one-person rule appear in the email", () => {
+  const message = ticketEmailMessage({ ...ticket, ticket_code: "a".repeat(32), ticket_label: "BTL-007", mode: "live" }, env,
+    { qrImage: () => "R0lGODlhAQABAAAAACw=", pdf: "JVBERi0xLjcK".repeat(20) });
+  assert.match(message.subject, /Standard Pass · BTL-007 · Beyond the Limits/);
+  assert.match(message.html, /1 ticket admits only 1 person/);
+  assert.match(message.text, /1 ticket admits only 1 person/);
+  assert.deepEqual(message.attachments.map((file) => [file.filename, file.content_type]), [
+    ["ticket-qr.gif", "image/gif"], ["BTL-007-ticket.pdf", "application/pdf"],
+  ]);
+});
+
+test("PDF layout draws every field, the QR and the one-person notice", async () => {
+  const { renderTicketPdf, pdfText } = await import("../supabase/functions/_shared/ticket-pdf.mjs");
+  const drawn = [];
+  let rects = 0;
+  const font = { widthOfTextAtSize: (text, size) => text.length * size * 0.55 };
+  const page = {
+    drawText: (text) => drawn.push(text), drawRectangle: () => { rects += 1; },
+    drawImage: () => {}, drawLine: () => {}, drawCircle: () => {},
+  };
+  const fakePdfLib = {
+    StandardFonts: { Helvetica: "h", HelveticaBold: "hb", CourierBold: "cb" },
+    rgb: (...parts) => parts,
+    PDFDocument: { create: async () => ({
+      setTitle() {}, setAuthor() {}, setSubject() {}, addPage: () => page, embedFont: async () => font,
+      embedJpg: async () => ({ width: 1280, height: 427 }), save: async () => new Uint8Array([37, 80, 68, 70]),
+    }) },
+  };
+  const qr = { size: 21, isDark: (row, col) => (row + col) % 2 === 0 };
+  const base64 = await renderTicketPdf(fakePdfLib, {
+    ...ticket, name: "Asha ₹ “Quote”", phone: "+919876543210", ticket_label: "BTL-001", base_paise: 299900, amount_paise: 353882,
+  }, env, { qr, logo: new Uint8Array([1]) });
+  assert.equal(base64, "JVBERg==");
+  for (const expected of ["STANDARD PASS", "BTL-001", "ADMIT ONE", "1 TICKET ADMITS", "ONLY 1 PERSON",
+    "Asha Rs.  \"Quote\"", "+919876543210", "attendee@example.test", "Rs. 3,538.82 (incl. GST)"]) {
+    assert(drawn.includes(expected), `missing ${expected}`);
+  }
+  assert(rects > 200, "QR modules were not drawn");
+  assert.equal(pdfText("தமிழ் Name"), "????? Name");
 });

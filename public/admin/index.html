@@ -9,12 +9,12 @@
   <title>Purchases | Beyond the Limits Admin</title>
   <link rel="icon" href="../assets/favicon.png" type="image/png">
   <link rel="stylesheet" href="../css/styles.css?v=20261120">
-  <link rel="stylesheet" href="admin.css?v=20261125">
-  <script src="../js/content.js?v=20261125" defer></script>
+  <link rel="stylesheet" href="admin.css?v=20261126">
+  <script src="../js/content.js?v=20261126" defer></script>
   <script src="../js/config.js?v=20261120" defer></script>
   <script src="../js/api.js?v=20261120" defer></script>
-  <script src="admin.js?v=20261125" defer></script>
-  <script src="checkin.js?v=20261125" defer></script>
+  <script src="admin.js?v=20261126" defer></script>
+  <script src="checkin.js?v=20261126" defer></script>
 </head>
 <body>
   <a class="skip-link" href="#admin-main">Skip to content</a>
@@ -70,23 +70,15 @@
               <div>
                 <p class="admin-kicker">Beyond the Limits</p>
                 <h1 id="overview-heading" tabindex="-1">Purchase overview</h1>
-                <p class="admin-description">Track confirmed passes, payments, and refunds for the summit.</p>
+                <p class="admin-description">Real ticket sales, payments, refunds and gate check-ins.</p>
               </div>
-              <div class="admin-mode-tools">
-                <label class="admin-field mode-field"><span>Razorpay data</span>
-                  <select id="mode">
-                    <option value="test">Test mode</option>
-                    <option value="live">Live mode</option>
-                  </select>
-                </label>
-              </div>
+              <p class="live-pill">Live sales</p>
             </div>
 
-            <p class="mode-note" id="mode-note">Test mode is selected. These orders use Razorpay test payments.</p>
             <dl class="metric-grid">
               <div class="metric"><dt>Confirmed passes</dt><dd><strong id="metric-confirmed">—</strong><span>Paid or partially refunded</span></dd></div>
               <div class="metric"><dt>Net payments</dt><dd><strong id="metric-net">—</strong><span>Captured less processed refunds</span></dd></div>
-              <div class="metric"><dt>Pending orders</dt><dd><strong id="metric-pending">—</strong><span>Awaiting payment confirmation</span></dd></div>
+              <div class="metric"><dt>Checked in</dt><dd><strong id="metric-checkedin">—</strong><span>Admitted at the gate</span></dd></div>
               <div class="metric"><dt>Processed refunds</dt><dd><strong id="metric-refunds">—</strong><span>Total refunded to customers</span></dd></div>
             </dl>
 
@@ -98,7 +90,7 @@
 
           <section class="purchase-panel checkin-panel" id="checkin" aria-labelledby="checkin-heading">
             <div class="purchase-top">
-              <div><h2 id="checkin-heading">Gate check-in</h2><p>Scan the QR code in an attendee’s ticket email. Each ticket admits one person, once.</p></div>
+              <div><h2 id="checkin-heading">Gate check-in</h2><p>Scan the QR code on the attendee’s ticket (email or PDF). 1 ticket admits only 1 person, once.</p></div>
               <p class="checkin-count"><strong id="checkin-count">—</strong><span id="checkin-of"></span></p>
             </div>
             <div class="checkin-grid">
@@ -112,7 +104,7 @@
                   <button class="button button-secondary" id="scanner-stop" type="button" hidden>Stop camera</button>
                 </div>
                 <form id="manual-checkin" class="manual-checkin">
-                  <label class="admin-field">Or type the ticket number<input name="code" placeholder="1A2B-3C4D" autocomplete="off" autocapitalize="characters" spellcheck="false" maxlength="40" required></label>
+                  <label class="admin-field">Or type the ticket number<input name="code" placeholder="BTL-001" autocomplete="off" autocapitalize="characters" spellcheck="false" maxlength="40" required></label>
                   <button class="button button-secondary" type="submit">Check in</button>
                 </form>
               </div>
@@ -129,14 +121,15 @@
 
           <section class="purchase-panel" id="purchases" aria-labelledby="purchases-heading">
             <div class="purchase-top">
-              <div><h2 id="purchases-heading">Purchases</h2><p>Find customer details and Razorpay references.</p></div>
-              <button type="button" class="button button-secondary" id="refresh-orders">Refresh</button>
+              <div><h2 id="purchases-heading">Purchases</h2><p>Every booking with the buyer’s details, ticket number and email status.</p></div>
+              <div class="purchase-actions"><button type="button" class="button button-secondary" id="export-orders">Export CSV</button><button type="button" class="button button-secondary" id="refresh-orders">Refresh</button></div>
             </div>
             <form class="purchase-filters" id="filters">
-              <label class="admin-field search-field">Search purchases<input type="search" name="search" placeholder="Name, email, or order ID" maxlength="120"></label>
+              <label class="admin-field search-field">Search purchases<input type="search" name="search" placeholder="Name, email, phone or BTL-001" maxlength="120"></label>
               <label class="admin-field"><span id="status-caption">Status</span><select name="status" aria-labelledby="status-caption">
                 <option value="">All statuses</option>
                 <option value="paid">Paid</option>
+                <option value="checked_in">Checked in</option>
                 <option value="pending">Pending</option>
                 <option value="failed">Failed</option>
                 <option value="partially_refunded">Partially refunded</option>
@@ -154,7 +147,7 @@
             <div class="order-scroll" tabindex="0" role="region" aria-label="Purchase results" hidden>
               <table class="order-table">
                 <caption class="sr-only">Summit purchase results</caption>
-                <thead><tr><th scope="col">Customer</th><th scope="col">Pass</th><th scope="col">Status</th><th scope="col">Total</th><th scope="col">Ordered on</th><th scope="col"><span class="sr-only">Details</span></th></tr></thead>
+                <thead><tr><th scope="col">Ticket</th><th scope="col">Customer</th><th scope="col">Pass</th><th scope="col">Status</th><th scope="col">Total</th><th scope="col">Booked on</th><th scope="col"><span class="sr-only">Details</span></th></tr></thead>
                 <tbody id="orders"></tbody>
               </table>
             </div>

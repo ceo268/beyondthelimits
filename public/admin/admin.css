@@ -103,6 +103,13 @@ body { background: var(--admin-background); }
 .order-details-grid > div { padding: .55rem 0; border-top: 1px solid var(--admin-divider); min-width: 0; }
 .order-details-grid dt { color: var(--muted); font-size: .76rem; }
 .order-details-grid dd { font-size: .87rem; overflow-wrap: anywhere; }
+.live-pill { display: inline-flex; align-items: center; gap: .5rem; padding: .45rem .85rem; border: 1px solid var(--paid-text); border-radius: var(--radius-pill); color: var(--paid-text); font-size: .8rem; font-weight: 700; white-space: nowrap; }
+.live-pill::before { content: ""; width: 8px; height: 8px; border-radius: var(--radius-round); background: currentColor; box-shadow: 0 0 0 4px rgb(169 233 194 / .18); }
+.metric-grid { margin-top: 1.12rem; }
+.purchase-actions { display: flex; gap: .45rem; flex-wrap: wrap; justify-content: flex-end; }
+.purchase-actions .button { min-height: 40px; }
+.ticket-cell { font-family: ui-monospace, "SF Mono", Menlo, monospace; font-weight: 700; color: var(--gold-light); white-space: nowrap; }
+.status-tag.checked-in { margin-left: .3rem; background: var(--paid-text); color: var(--paid-bg); }
 .checkin-count { flex: none; color: var(--muted); font-size: .85rem; text-align: right; white-space: nowrap; }
 .checkin-count strong { color: var(--gold-light); font-size: 1.6rem; letter-spacing: -.03em; margin-right: .2rem; }
 .checkin-grid { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 1.2rem; padding: 0 clamp(16px, 2vw, 28px) clamp(16px, 2vw, 28px); }
@@ -162,7 +169,9 @@ body { background: var(--admin-background); }
   .checkin-count { text-align: left; }
   .order-table { min-width: 0; font-size: .8rem; }
   .order-table th, .order-table td { padding-inline: .4rem; }
-  .order-table :is(th, td):is(:nth-child(2), :nth-child(5)), .customer-secondary { display: none; }
+  .order-table :is(th, td):is(:nth-child(3), :nth-child(5), :nth-child(6)), .customer-secondary { display: none; }
+  .tier-grid { grid-template-columns: 1fr; gap: .7rem; }
+  .status-tag.checked-in { margin: .25rem 0 0; }
   .order-table :is(th, td):first-child { padding-inline-start: .75rem; }
   .order-table :is(th, td):last-child { padding-inline-end: .65rem; }
   .customer-primary { overflow-wrap: anywhere; }
