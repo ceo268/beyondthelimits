@@ -238,7 +238,7 @@ function bindStaticContent() {
   $('meta[property="og:description"]').content = seo.description;
   $('meta[property="og:image:alt"]').content = summit.logoAlt;
   const siteUrl = webUrl(seo.siteUrl);
-  if (siteUrl) {
+  if (siteUrl && !$('link[rel="canonical"]')) {
     const canonical = document.createElement("link");
     canonical.rel = "canonical";
     canonical.href = siteUrl;

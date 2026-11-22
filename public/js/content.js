@@ -15,7 +15,7 @@ const CONTENT = {
   seo: {
     title: "Beyond the Limits – Business Summit | 7 February 2027",
     description: "Join founders, creators and business leaders on 7 February 2027 at Sir Mutha Venkatasubba Rao Concert Hall for the Beyond the Limits Business Summit.",
-    siteUrl: "", // Set to the deployed HTTPS URL for absolute social preview and canonical URLs.
+    siteUrl: "https://www.beyondthelimits.co.in/", // Absolute social preview and canonical URLs.
     image: "assets/logo.jpg", // Social preview image. Keep it a JPG/PNG for WhatsApp, LinkedIn and X.
   },
   ui: {
