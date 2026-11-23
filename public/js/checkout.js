@@ -107,7 +107,7 @@
     $(".checkout-summary", dialog).hidden = false;
     $("#checkout-pass").textContent = tier.label;
     $("#checkout-total").textContent = api.money(tier.amount_paise);
-    $("#checkout-tax").textContent = tier.amount_paise > tier.base_paise ? copy.tax : "";
+    $("#checkout-tax").textContent = copy.tax; // All pass prices are inclusive of GST.
     $(".checkout-mode", dialog).hidden = mode !== "test";
     $("#checkout-contact-note").textContent = mode === "live" ? copy.ticketEmailNote : copy.contactNote;
   }

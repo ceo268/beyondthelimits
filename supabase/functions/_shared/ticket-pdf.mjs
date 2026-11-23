@@ -53,8 +53,7 @@ export async function renderTicketPdf(PDFLib, ticket, env, { qr, logo } = {}) {
   const label = ticket.ticket_label || "TICKET";
   const eventDate = env.TICKET_EVENT_DATE?.trim() || "7 February 2027";
   const venue = env.TICKET_EVENT_VENUE?.trim() || "Sir Mutha Venkatasubba Rao Concert Hall";
-  const amount = "Rs. " + money.format(ticket.amount_paise / 100)
-    + (ticket.base_paise && ticket.amount_paise > ticket.base_paise ? " (incl. GST)" : "");
+  const amount = "Rs. " + money.format(ticket.amount_paise / 100) + " (incl. GST)";
 
   const doc = await PDFDocument.create();
   doc.setTitle(pdfText(`${label} · ${ticket.pass_label} · Beyond the Limits Business Summit`));

@@ -29,7 +29,7 @@ test("email is the attendee ticket and escapes customer data", () => {
   assert.deepEqual(message.to, [ticket.email]);
   assert.equal(message.from, env.RESEND_FROM_EMAIL);
   assert.match(message.text, /7 February 2027/);
-  assert.match(message.text, /₹2,999/);
+  assert.match(message.text, /Amount paid: ₹2,999 \(incl\. GST\)/);
   assert(message.text.includes(ticket.order_id));
   assert.match(message.html, /Asha &lt;Example&gt;/);
   assert.doesNotMatch(message.html, /Asha <Example>/);
@@ -168,11 +168,11 @@ test("PDF layout draws every field, the QR and the one-person notice", async () 
   };
   const qr = { size: 21, isDark: (row, col) => (row + col) % 2 === 0 };
   const base64 = await renderTicketPdf(fakePdfLib, {
-    ...ticket, name: "Asha ₹ “Quote”", phone: "+919876543210", ticket_label: "BTL-001", base_paise: 299900, amount_paise: 353882,
+    ...ticket, name: "Asha ₹ “Quote”", phone: "+919876543210", ticket_label: "BTL-001", base_paise: 299900, amount_paise: 299900,
   }, env, { qr, logo: new Uint8Array([1]) });
   assert.equal(base64, "JVBERg==");
   for (const expected of ["STANDARD PASS", "BTL-001", "ADMIT ONE", "1 TICKET ADMITS", "ONLY 1 PERSON",
-    "Asha Rs.  \"Quote\"", "+919876543210", "attendee@example.test", "Rs. 3,538.82 (incl. GST)"]) {
+    "Asha Rs.  \"Quote\"", "+919876543210", "attendee@example.test", "Rs. 2,999.00 (incl. GST)"]) {
     assert(drawn.includes(expected), `missing ${expected}`);
   }
   assert(rects > 200, "QR modules were not drawn");

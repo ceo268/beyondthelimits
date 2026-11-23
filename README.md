@@ -71,10 +71,9 @@ Do steps 1–5 in Test Mode first, then repeat with Live keys.
    npx supabase secrets set --env-file supabase/.env
    npx supabase functions deploy checkout razorpay-webhook ticket-email
    ```
-2. **Set the GST-inclusive amount** each pass charges, in paise (₹1 = 100 paise), and enable it. For example, ₹2,999 + 18% GST = ₹3,538.82 → `353882`. Confirm the exact GST treatment with your accountant.
+2. **Prices are inclusive of GST:** Standard ₹2,999, Premium ₹4,999, VIP ₹6,999. Nothing is added at checkout. `charge_paise` is the amount charged, in paise (₹1 = 100 paise):
    ```sql
-   update summit_private.pass_tiers set charge_paise = 353882, sale_enabled = true where slug = 'standard';
-   -- repeat for 'premium' and 'vip'
+   update summit_private.pass_tiers set charge_paise = base_paise, sale_enabled = true where slug in ('standard', 'premium', 'vip');
    ```
 3. **Razorpay webhook:** Razorpay Dashboard → Webhooks → `https://<project-ref>.supabase.co/functions/v1/razorpay-webhook`, events `payment.captured`, `payment.failed`, `refund.processed`, with the same secret as `RAZORPAY_WEBHOOK_SECRET`. Turn on auto-capture.
 4. **Organizer access:** create the user in Supabase Auth, then:

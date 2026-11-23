@@ -44,7 +44,7 @@ export function ticketEmailMessage(ticket, env, { qrImage, pdf } = {}) {
   if (!emailPattern.test(ticket.email)) return null;
   const eventDate = env.TICKET_EVENT_DATE?.trim() || "7 February 2027";
   const venue = env.TICKET_EVENT_VENUE?.trim() || "Sir Mutha Venkatasubba Rao Concert Hall";
-  const amount = currency.format(ticket.amount_paise / 100);
+  const amount = currency.format(ticket.amount_paise / 100) + " (incl. GST)";
   const brand = "Beyond the Limits Business Summit";
   const testTicket = ticket.mode === "test";
   const code = ticketCode.test(ticket.ticket_code || "") ? ticket.ticket_code : null;

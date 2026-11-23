@@ -110,7 +110,7 @@ const CONTENT = {
     heading: "Summit",
     highlight: "Passes",
     admit: "Admit One",
-    tax: "+ GST",
+    tax: "Incl. GST",
     comingSoon: "Tickets on Sale Soon",
     // Sales switch. While false, the page makes no backend calls at all.
     // Set to true only after pass prices are enabled in Supabase (see README).
@@ -165,7 +165,7 @@ const CONTENT = {
     phoneExample: "98765 43210",
     contactNote: "All fields are required. 1 ticket admits only 1 person.",
     ticketEmailNote: "All fields are required. 1 ticket admits only 1 person. Your PDF ticket with its entry QR code is emailed to this address once payment is confirmed.",
-    tax: "Includes GST",
+    tax: "Inclusive of GST",
     total: "Total to pay",
     closed: "Checkout was closed. Continue with the same order when you’re ready.",
     failed: "The payment attempt failed. Review your details and try again.",

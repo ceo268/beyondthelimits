@@ -203,16 +203,13 @@ const emailStatusNames = {
 };
 
 function showOrder(order) {
-  const gst = order.amount_paise - order.base_paise;
   const fields = [
     ["Customer", order.customer_name],
     ["Pass", order.pass_label],
     ["Email", order.customer_email],
     ["Phone", order.customer_phone],
     ["Payment status", statusNames[order.status] || order.status],
-    ["Order total", api.money(order.amount_paise)],
-    ["Pass subtotal", api.money(order.base_paise)],
-    ["GST", api.money(gst)],
+    ["Order total (incl. GST)", api.money(order.amount_paise)],
     ["Refunded", api.money(order.refunded_paise)],
     ["Capture recorded", formattedDate(order.paid_at, true)],
     ["Order created", formattedDate(order.created_at, true)],
