@@ -61,6 +61,16 @@ The Supabase project in `public/js/config.js` already has the migrations applied
 - **Test emails:** `summit_private.settings.email_test_tickets` (currently `true`) also emails tickets for Razorpay *test* payments, marked "TEST TICKET · NOT VALID FOR ENTRY", so you can rehearse the whole flow. Turn it off with `update summit_private.settings set email_test_tickets = false;`.
 - **Ticket artwork (optional):** put `standard.png`, `premium.png` and `vip.png` (1120×400) in `public/assets/tickets/`, deploy, then set the Supabase secret `TICKET_ART_BASE_URL=https://yourdomain.com/assets/tickets` and redeploy `ticket-email`. Each email then shows the artwork for its pass above the ticket.
 
+## Coupons
+
+- **Create and manage:** `/admin/` → **Coupons** → **New coupon**. Set a code (3–30 letters, numbers, `-` or `_`; stored upper-case), a percentage (1–100%) or a fixed ₹ amount, an optional expiry, an optional usage limit, and Enabled. Edit, disable, enable or delete from the list. Changes apply to new checkouts immediately.
+- **Checkout:** buyers select **Have a coupon code?**, enter it and select **Apply**. The total shows Ticket price, Coupon code, Discount and Total payable. Switching pass reprices the coupon for that pass.
+- **Pricing rules (server-side only):** percentages round down to whole rupees (20% of ₹2,999 = ₹599 off). A discount never exceeds the ticket price, and the minimum payable is ₹1 because Razorpay can't take ₹0 (a 100% coupon charges ₹1).
+- **Security:** the browser only sends the code. `summit_coupon_quote` and `summit_reserve` price the order in the database, the Razorpay order is created for that amount, and payment verification still checks Razorpay's amount against the stored order. Wrong guesses are limited to 12 per visitor per 10 minutes. Coupon management functions require organizer access.
+- **Usage limit:** counts paid orders (not fully refunded) plus unpaid orders still within 30 minutes of checkout, so simultaneous buyers can't overshoot it. Test-mode and live orders are counted separately. If a held checkout is paid after 30 minutes, the limit can be exceeded by that order.
+- **Records:** each order keeps the coupon code and discount it was sold with, so editing or deleting a coupon never changes past orders. Purchases details and the CSV export show both.
+- **Deploying:** apply `supabase/migrations/20261123100000_coupons.sql` **before** redeploying the `checkout` function (the new function passes `p_coupon`, which the old database function doesn't accept). Then deploy `public/`.
+
 ## Going live checklist
 
 Do steps 1–5 in Test Mode first, then repeat with Live keys.

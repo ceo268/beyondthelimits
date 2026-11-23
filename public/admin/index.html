@@ -8,13 +8,14 @@
   <meta name="theme-color" content="#000000">
   <title>Purchases | Beyond the Limits Admin</title>
   <link rel="icon" href="../assets/favicon.png" type="image/png">
-  <link rel="stylesheet" href="../css/styles.css?v=20261120">
-  <link rel="stylesheet" href="admin.css?v=20261129">
-  <script src="../js/content.js?v=20261129" defer></script>
+  <link rel="stylesheet" href="../css/styles.css?v=20261163">
+  <link rel="stylesheet" href="admin.css?v=20261161">
+  <script src="../js/content.js?v=20261163" defer></script>
   <script src="../js/config.js?v=20261120" defer></script>
   <script src="../js/api.js?v=20261120" defer></script>
-  <script src="admin.js?v=20261129" defer></script>
+  <script src="admin.js?v=20261161" defer></script>
   <script src="checkin.js?v=20261129" defer></script>
+  <script src="coupons.js?v=20261161" defer></script>
 </head>
 <body>
   <a class="skip-link" href="#admin-main">Skip to content</a>
@@ -54,6 +55,10 @@
           <a href="#checkin" data-section="checkin">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M4 8V5a1 1 0 0 1 1-1h3m8 0h3a1 1 0 0 1 1 1v3m0 8v3a1 1 0 0 1-1 1h-3m-8 0H5a1 1 0 0 1-1-1v-3"/><rect x="8" y="8" width="3" height="3"/><rect x="13" y="8" width="3" height="3"/><rect x="8" y="13" width="3" height="3"/><path d="M13 13h3v3"/></svg>
             Check-in
+          </a>
+          <a href="#coupons" data-section="coupons">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M3.5 12.2V5a1.5 1.5 0 0 1 1.5-1.5h7.2a1.5 1.5 0 0 1 1 .44l7.4 7.4a1.5 1.5 0 0 1 0 2.12l-7.2 7.2a1.5 1.5 0 0 1-2.12 0l-7.4-7.4a1.5 1.5 0 0 1-.44-1.06Z"/><circle cx="8" cy="8" r="1.4"/><path d="m10 15 5-5"/></svg>
+            Coupons
           </a>
         </nav>
         <a class="admin-site-link text-link" href="../">View summit website</a>
@@ -155,6 +160,41 @@
               <p id="page-summary"></p>
               <div class="page-buttons"><button class="button button-secondary" id="prev-page" type="button">Previous</button><button class="button button-secondary" id="next-page" type="button">Next</button></div>
             </footer>
+          </section>
+
+          <section class="purchase-panel" id="coupons" aria-labelledby="coupons-heading">
+            <div class="purchase-top">
+              <div><h2 id="coupons-heading">Coupons</h2><p>Discount codes for checkout. New codes and edits apply to checkouts straight away.</p></div>
+              <div class="purchase-actions"><button type="button" class="button button-primary" id="coupon-new">New coupon</button><button type="button" class="button button-secondary" id="refresh-coupons">Refresh</button></div>
+            </div>
+            <form class="coupon-form" id="coupon-form" hidden novalidate>
+              <h3 id="coupon-form-heading">New coupon</h3>
+              <div class="coupon-form-grid">
+                <label class="admin-field">Coupon code<input name="code" required maxlength="30" autocomplete="off" autocapitalize="characters" spellcheck="false" placeholder="BEYOND20" pattern="[A-Za-z0-9][A-Za-z0-9_\-]{2,29}"></label>
+                <label class="admin-field">Discount type<select name="discount_type">
+                  <option value="percent">Percentage off</option>
+                  <option value="fixed">Fixed amount off (₹)</option>
+                </select></label>
+                <label class="admin-field"><span id="coupon-value-label">Percentage off</span><input name="discount_value" type="number" inputmode="decimal" min="1" step="1" required aria-labelledby="coupon-value-label"></label>
+                <label class="admin-field">Expires <span class="field-hint">(optional)</span><input name="expires_at" type="datetime-local"></label>
+                <label class="admin-field">Usage limit <span class="field-hint">(optional)</span><input name="usage_limit" type="number" inputmode="numeric" min="1" step="1" placeholder="No limit"></label>
+                <label class="coupon-enabled"><input name="enabled" type="checkbox" checked> Enabled</label>
+              </div>
+              <p class="coupon-preview" id="coupon-preview" aria-live="polite"></p>
+              <div class="coupon-form-actions">
+                <button type="submit" class="button button-primary" id="coupon-save">Save coupon</button>
+                <button type="button" class="button button-secondary" id="coupon-cancel">Cancel</button>
+              </div>
+              <p class="coupon-form-status" id="coupon-form-status" role="status"></p>
+            </form>
+            <p class="orders-status" role="status" id="coupons-status"></p>
+            <div class="order-scroll" tabindex="0" role="region" aria-label="Coupons" id="coupon-scroll" hidden>
+              <table class="order-table coupon-table">
+                <caption class="sr-only">Coupon codes</caption>
+                <thead><tr><th scope="col">Code</th><th scope="col">Discount</th><th scope="col">Used</th><th scope="col">Expires</th><th scope="col">Status</th><th scope="col"><span class="sr-only">Actions</span></th></tr></thead>
+                <tbody id="coupon-rows"></tbody>
+              </table>
+            </div>
           </section>
         </div>
       </div>

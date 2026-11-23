@@ -185,3 +185,34 @@ body { background: var(--admin-background); }
   .tier-grid { gap: .55rem; }
   .tier-header { font-size: .69rem; }
 }
+
+/* Coupons */
+#coupons { margin-top: clamp(18px, 2.4vw, 28px); }
+.coupon-form { display: grid; gap: .9rem; margin: 0 clamp(16px, 2vw, 28px) 1.3rem; padding: clamp(14px, 1.8vw, 22px); border: 1px solid var(--admin-divider); border-radius: var(--radius-card); background: var(--admin-input); }
+.coupon-form[hidden] { display: none; }
+.coupon-form h3 { font-size: 1.02rem; }
+.coupon-form-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: .75rem; align-items: end; }
+.coupon-form .admin-field :is(input, select) { background: var(--black); }
+.coupon-form input[name="code"] { text-transform: uppercase; letter-spacing: .06em; }
+.coupon-form input[name="code"]::placeholder { letter-spacing: 0; }
+.field-hint { color: var(--muted); font-weight: 400; }
+.coupon-enabled { display: flex; align-items: center; gap: .55rem; min-height: 43px; color: var(--cream); font-size: .9rem; font-weight: 600; cursor: pointer; }
+.coupon-enabled input { width: 18px; height: 18px; accent-color: var(--gold); }
+.coupon-preview { color: var(--muted); font-size: .82rem; line-height: 1.5; }
+.coupon-preview:empty { display: none; }
+.coupon-form-actions { display: flex; flex-wrap: wrap; gap: .5rem; }
+.coupon-form-actions .button { min-height: 42px; }
+.coupon-form-status { color: var(--gold-light); font-size: .85rem; }
+.coupon-form-status:empty { display: none; }
+.coupon-form-status[data-tone="error"] { color: var(--failed-text); }
+.coupon-table { min-width: 720px; }
+.coupon-code { letter-spacing: .06em; color: var(--gold-light); }
+.coupon-table .customer-secondary { display: block; }
+.coupon-actions { display: flex; gap: .35rem; justify-content: flex-end; white-space: nowrap; }
+.coupon-actions .button { min-height: 34px; padding: .3rem .7rem; font-size: .78rem; }
+@media (max-width: 720px) {
+  .coupon-form-grid { grid-template-columns: 1fr 1fr; }
+}
+@media (max-width: 420px) {
+  .coupon-form-grid { grid-template-columns: 1fr; }
+}

@@ -132,28 +132,73 @@ function checkoutSummary(order) {
   };
 }
 
+const couponErrors = {
+  coupon_not_found: [400, "This coupon code isn’t valid. Check the spelling and try again."],
+  coupon_disabled: [400, "This coupon is no longer active."],
+  coupon_expired: [400, "This coupon has expired."],
+  coupon_used_up: [400, "This coupon has reached its usage limit."],
+  coupon_limited: [429, "Too many coupon attempts. Please try again in a few minutes."],
+};
+
 const reserveErrors = {
   closed: [409, "This pass is currently unavailable."],
   price_changed: [409, "The total changed. Reload the page to see the current price."],
   busy: [409, "Checkout is still starting. Wait a few seconds and try again."],
   conflict: [409, "Close checkout and reopen it to update your details."],
   limited: [429, "Too many checkout attempts. Please try again in a few minutes."],
+  ...couponErrors,
 };
+
+function validatedTier(tier) {
+  if (typeof tier !== "string" || !/^[a-z_]{2,20}$/.test(tier)) {
+    throw new RequestError(400, "invalid_pass", "Choose a valid pass.");
+  }
+  return tier;
+}
+
+// Coupon codes are optional. Only the code travels from the browser; the database prices it.
+function validatedCoupon(raw, required = false) {
+  const code = typeof raw === "string" ? raw.trim().toUpperCase() : "";
+  if (!code && !required) return null;
+  if (!/^[A-Z0-9][A-Z0-9_-]{2,29}$/.test(code)) {
+    throw new RequestError(400, "coupon_not_found", couponErrors.coupon_not_found[1]);
+  }
+  return code;
+}
+
+async function quoteCoupon(body, request, env, { rpc, mode }) {
+  const tier = validatedTier(body.tier);
+  const code = validatedCoupon(body.coupon, true);
+  if (!env.CHECKOUT_RATE_LIMIT_SECRET) throw new Error("Missing rate limit secret.");
+  const quote = await rpc("summit_coupon_quote", {
+    p_code: code, p_tier: tier, p_mode: mode,
+    p_origin_hash: await originHash(request, env.CHECKOUT_RATE_LIMIT_SECRET),
+  });
+  if (quote.result !== "ok") {
+    const [status, text] = reserveErrors[quote.result] || reserveErrors.closed;
+    throw new RequestError(status, quote.result, text);
+  }
+  return {
+    code: quote.code, tier, price: quote.price_paise, discount: quote.discount_paise, amount: quote.amount_paise,
+    discountType: quote.discount_type, discountValue: quote.discount_value,
+  };
+}
 
 async function createOrder(body, request, env, { rpc, razor, mode }) {
   const hash = await checkoutHash(body.token);
   const { name, email, phone } = validatedCustomer(body);
   // The database decides which tiers exist and are on sale (summit_reserve returns "closed" otherwise).
-  if (typeof body.tier !== "string" || !/^[a-z_]{2,20}$/.test(body.tier) || !Number.isInteger(body.amount)
-      || body.amount < 100 || body.amount > 2_147_483_647) {
+  validatedTier(body.tier);
+  if (!Number.isInteger(body.amount) || body.amount < 100 || body.amount > 2_147_483_647) {
     throw new RequestError(400, "invalid_pass", "Choose a valid pass.");
   }
+  const coupon = validatedCoupon(body.coupon);
   if (!env.CHECKOUT_RATE_LIMIT_SECRET) throw new Error("Missing rate limit secret.");
 
   const worker = crypto.randomUUID();
   const reservation = await rpc("summit_reserve", {
     p_hash: hash, p_tier: body.tier, p_name: name, p_email: email, p_phone: phone,
-    p_amount: body.amount, p_mode: mode, p_worker: worker,
+    p_amount: body.amount, p_mode: mode, p_worker: worker, p_coupon: coupon,
     p_origin_hash: await originHash(request, env.CHECKOUT_RATE_LIMIT_SECRET),
   });
   if (Object.hasOwn(reserveErrors, reservation.result)) {
@@ -261,6 +306,8 @@ export function checkoutHandler(env, fetcher = fetch) {
             mode: backend.mode,
             tiers: backend.mode === "live" && !ticketEmailConfigured(env) ? [] : await backend.rpc("summit_catalog"),
           }, 200, headers);
+        case "quote":
+          return json(await quoteCoupon(body, request, env, backend), 200, headers);
         case "create":
           if (backend.mode === "live" && !ticketEmailConfigured(env)) {
             throw new RequestError(503, "sales_closed", "Live ticket sales are unavailable.");

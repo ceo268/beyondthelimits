@@ -24,6 +24,7 @@ const icons = {
   close: '<path d="m6 6 12 12M18 6 6 18" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/>',
   pause: '<path d="M9 6v12m6-12v12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>',
   play: '<path d="m9 5 11 7-11 7Z"/>',
+  check: '<path d="m5 12.5 4.5 4.5L19 7.5" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>',
   instagram: '<rect x="3" y="3" width="18" height="18" rx="5" fill="none" stroke="currentColor" stroke-width="1.7"/><circle cx="12" cy="12" r="4" fill="none" stroke="currentColor" stroke-width="1.7"/><circle cx="17.5" cy="6.7" r="1"/>',
   linkedin: '<path d="M6 8a1.6 1.6 0 1 0 0-3.2A1.6 1.6 0 0 0 6 8ZM4.7 10h2.6v9H4.7zm4.9 0h2.5v1.2c.5-.9 1.5-1.4 2.7-1.4 2.7 0 3.4 1.8 3.4 4.1V19h-2.6v-4.6c0-1.1-.2-2.1-1.5-2.1-1.4 0-1.9.9-1.9 2V19H9.6z"/>',
   youtube: '<path d="M21 9a3 3 0 0 0-2.5-2.6 48 48 0 0 0-13 0A3 3 0 0 0 3 9a26 26 0 0 0 0 6 3 3 0 0 0 2.5 2.6 48 48 0 0 0 13 0A3 3 0 0 0 21 15a26 26 0 0 0 0-6ZM10 15.3V8.7l5.5 3.3Z"/>',
@@ -109,11 +110,19 @@ function renderHero() {
   }
 }
 
-// Speaker photos for each "What to Expect" collage, picked by file name from the lineup.
-function expectPhotos(index) {
-  return (expect.items[index].photos || [])
+// Speaker photos picked by file name (without .webp) from the lineup.
+function speakerPhotos(names = []) {
+  return names
     .map((name) => speakers.find(({ photo }) => photo?.endsWith("/" + name + ".webp"))?.photo)
     .filter(Boolean);
+}
+const expectPhotos = (index) => speakerPhotos(expect.items[index].photos);
+
+// About-section frames: a grid of speaker portraits, one tile per photo so each lazy-loads on its own.
+function montage(names, side) {
+  return `<div class="art-frame art-montage art-montage-${side}" aria-hidden="true">
+    ${speakerPhotos(names).map((photo) => `<div class="montage-tile">${optionalImage(photo)}</div>`).join("")}
+  </div>`;
 }
 
 function renderAboutAndExpect() {
@@ -126,10 +135,10 @@ function renderAboutAndExpect() {
     ${heading("about-title", about.heading)}
     <div class="about-copy">${about.paragraphs.map((paragraph) => `<p>${safe(paragraph)}</p>`).join("")}</div>
     <div class="about-visual about-visual-left">
-      <div class="art-frame art-strata"></div>
+      ${montage(about.montageLeft, "left")}
       ${icon("sparkle", "about-sparkle")}
     </div>
-    <div class="about-visual about-visual-right art-frame art-rings"></div>`;
+    <div class="about-visual about-visual-right">${montage(about.montageRight, "right")}</div>`;
   $("#expect").innerHTML = `
     ${heading("expect-title", expect.heading, expect.highlight)}
     <div class="expect-grid">
@@ -172,14 +181,98 @@ function renderValuesAndSpeakers() {
   $("#speakers").innerHTML = `
     ${heading("speakers-title", lineup.heading, lineup.highlight)}
     <ul class="speaker-grid">
-      ${speakers.map(({ name, role, slug, photo }) => {
+      ${speakers.map(({ name, role, slug, photo, highlight, bio }) => {
         const initials = name.split(/[.\s]+/).filter(Boolean).slice(0, 2).map((part) => part[0]).join("");
-        return `<li class="speaker-card" id="speaker-${safe(slug)}">
-          <div class="speaker-portrait" aria-hidden="true"><span>${safe(initials)}</span>${optionalImage(photo)}</div>
-          <div class="speaker-copy"><h3>${safe(name)}</h3>${role ? `<p>${safe(role)}</p>` : ""}</div>
+        // " · " separates two roles: each goes on its own line.
+        const roleLines = role.split(" · ").map(safe).join("<br>");
+        // In the highlight, keep "·" with the word before it so a line never starts with it.
+        const stat = safe(highlight || "").replaceAll(" · ", " · ");
+        // Back of the flipped frame: name, the highlight in big gold type, then the bio.
+        const back = highlight || bio
+          ? `<div class="speaker-back"><div class="speaker-back-inner">
+              <p class="speaker-back-name" aria-hidden="true">${safe(name)}</p>
+              ${highlight ? `<p class="speaker-back-stat">${stat}</p>` : ""}
+              ${bio ? `<p class="speaker-back-bio">${safe(bio)}</p>` : ""}
+              <p class="speaker-back-mark" aria-hidden="true">${icon("sparkle")}${safe(summit.brand)}</p>
+            </div></div>`
+          : "";
+        return `<li class="speaker-card${back ? " has-drawer" : ""}" id="speaker-${safe(slug)}"${back ? ` tabindex="0"` : ""}>
+          <div class="speaker-flip">
+            <div class="speaker-media">
+              <div class="speaker-portrait" aria-hidden="true"><span>${safe(initials)}</span>${optionalImage(photo)}</div>
+              <div class="speaker-caption"><h3>${safe(name)}</h3>${role ? `<p>${roleLines}</p>` : ""}</div>
+            </div>
+            ${back}
+          </div>
         </li>`;
       }).join("")}
     </ul>`;
+  bindSpeakerDrawers();
+}
+
+// A mouse opens the drawer on hover via CSS. A finger or pen has no hover, so a
+// tap toggles it instead (and closes any other open drawer). Enter/Space work too.
+// On phones the cards are too small for the drawer, so a tap opens a bottom sheet instead.
+function bindSpeakerDrawers() {
+  const cards = $$(".speaker-card.has-drawer");
+  const small = matchMedia("(max-width: 640px)");
+  let pointer = "mouse";
+  const sheet = speakerSheet();
+  const toggle = (card) => {
+    if (small.matches) { sheet.show(speakers.find(({ slug }) => card.id === "speaker-" + slug), card); return; }
+    const open = !card.classList.contains("is-open");
+    cards.forEach((other) => other.classList.remove("is-open"));
+    card.classList.toggle("is-open", open);
+  };
+  cards.forEach((card) => {
+    card.addEventListener("pointerdown", (event) => { pointer = event.pointerType; });
+    card.addEventListener("click", () => { if (pointer !== "mouse") toggle(card); });
+    card.addEventListener("keydown", (event) => {
+      if (event.key === "Enter" || event.key === " ") { event.preventDefault(); toggle(card); }
+      if (event.key === "Escape") card.classList.remove("is-open");
+    });
+  });
+  document.addEventListener("click", (event) => {
+    if (!event.target.closest(".speaker-card.has-drawer")) cards.forEach((card) => card.classList.remove("is-open"));
+  });
+}
+
+function speakerSheet() {
+  const dialog = document.createElement("dialog");
+  dialog.className = "speaker-sheet";
+  dialog.setAttribute("aria-labelledby", "speaker-sheet-name");
+  document.body.append(dialog);
+  let returnFocus = null;
+  const close = () => {
+    dialog.classList.remove("is-shown");
+    setTimeout(() => { dialog.close(); returnFocus?.focus({ preventScroll: true }); }, 380);
+  };
+  dialog.addEventListener("click", (event) => {
+    // A tap on the backdrop lands on the dialog itself; taps on content land on children.
+    if (event.target === dialog || event.target.closest(".speaker-sheet-close")) close();
+  });
+  dialog.addEventListener("cancel", (event) => { event.preventDefault(); close(); });
+  return {
+    show(speaker, card) {
+      if (!speaker) return;
+      returnFocus = card;
+      const { name, role, photo, highlight, bio } = speaker;
+      dialog.innerHTML = `<div class="speaker-sheet-content">
+        <span class="speaker-sheet-grip" aria-hidden="true"></span>
+        <button type="button" class="speaker-sheet-close" aria-label="Close">×</button>
+        <div class="speaker-sheet-inner">
+          <div class="speaker-sheet-photo">${photo ? `<img src="${safe(photo)}" alt="">` : ""}</div>
+          <div class="speaker-sheet-head">
+            <h3 id="speaker-sheet-name">${safe(name)}</h3>
+            ${role ? `<p>${safe(role)}</p>` : ""}
+            ${highlight ? `<p class="speaker-highlight">${icon("sparkle")}<span>${safe(highlight)}</span></p>` : ""}
+          </div>
+        </div>
+        ${bio ? `<p class="speaker-sheet-bio">${safe(bio)}</p>` : ""}</div>`;
+      dialog.showModal();
+      requestAnimationFrame(() => requestAnimationFrame(() => dialog.classList.add("is-shown")));
+    },
+  };
 }
 
 function renderPasses() {
