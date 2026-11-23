@@ -72,7 +72,7 @@ async function accessToken() {
 }
 
 function updateActiveSection() {
-  const active = ["#purchases", "#checkin"].includes(location.hash) ? location.hash.slice(1) : "overview";
+  const active = ["#purchases", "#checkin", "#coupons"].includes(location.hash) ? location.hash.slice(1) : "overview";
   nodeList("[data-section]").forEach((link) => {
     if (link.dataset.section === active) link.setAttribute("aria-current", "location");
     else link.removeAttribute("aria-current");
@@ -150,6 +150,7 @@ async function signIn(event) {
     updateActiveSection();
     $("#overview-heading").focus({ preventScroll: true });
     void loadDashboard();
+    document.dispatchEvent(new Event("summit:signedin"));
   } catch (error) {
     if (jwt) void revoke(jwt);
     loginStatus.textContent = error.status === 400 || error.status === 401
@@ -210,6 +211,11 @@ function showOrder(order) {
     ["Phone", order.customer_phone],
     ["Payment status", statusNames[order.status] || order.status],
     ["Order total (incl. GST)", api.money(order.amount_paise)],
+    ...(order.coupon_code || order.discount_paise ? [
+      ["List price", api.money(order.amount_paise + (order.discount_paise || 0))],
+      ["Coupon", order.coupon_code || "—"],
+      ["Discount", "−" + api.money(order.discount_paise || 0)],
+    ] : []),
     ["Refunded", api.money(order.refunded_paise)],
     ["Capture recorded", formattedDate(order.paid_at, true)],
     ["Order created", formattedDate(order.created_at, true)],
@@ -321,10 +327,10 @@ async function exportOrders() {
   ordersStatus.textContent = "Preparing the attendee list…";
   try {
     const rows = await api.admin("summit_admin_export", { p_mode: mode.value }, await accessToken());
-    const header = ["Ticket", "Name", "Email", "Phone", "Pass", "Amount (INR)", "Refunded (INR)", "Status",
+    const header = ["Ticket", "Name", "Email", "Phone", "Pass", "Amount (INR)", "Coupon", "Discount (INR)", "Refunded (INR)", "Status",
       "Paid at", "Checked in at", "Ticket email", "Razorpay payment ID"];
     const lines = rows.map((row) => [row.ticket, row.name, row.email, row.phone, row.pass,
-      (row.amount_paise / 100).toFixed(2), (row.refunded_paise / 100).toFixed(2), statusNames[row.status] || row.status,
+      (row.amount_paise / 100).toFixed(2), row.coupon_code || "", ((row.discount_paise || 0) / 100).toFixed(2), (row.refunded_paise / 100).toFixed(2), statusNames[row.status] || row.status,
       formattedDate(row.paid_at, true), row.checked_in_at ? formattedDate(row.checked_in_at, true) : "",
       emailStatusNames[row.email_status] || "", row.razorpay_payment_id].map(csvCell).join(","));
     const blob = new Blob(["\ufeff" + [header.join(","), ...lines].join("\r\n")], { type: "text/csv;charset=utf-8" });

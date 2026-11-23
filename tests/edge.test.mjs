@@ -68,6 +68,10 @@ function mock(overrides = {}) {
         result: "reserved", recovered: false, order: { ...fixture, razorpay_order_id: null },
       });
       if (name === "summit_attach") return Response.json(true);
+      if (name === "summit_coupon_quote") return Response.json(overrides.quote ?? {
+        result: "ok", code: "BEYOND20", discount_type: "percent", discount_value: 20,
+        price_paise: 350000, discount_paise: 70000, amount_paise: 280000,
+      });
       if (name === "summit_record_payment") return Response.json(overrides.status ?? "paid");
     }
     assert.equal(url.hostname, "api.razorpay.com");
@@ -102,6 +106,54 @@ test("create passes only the database price and normalized details to the respec
   assert.equal(reserve[2].p_phone, "+919000001234");
   assert.notEqual(reserve[2].p_hash, customer.token);
   assert.deepEqual(provider[2], { amount: 350000, currency: "INR", receipt: fixture.id, partial_payment: false });
+});
+
+test("coupon quotes come from the database and send only the normalized code", async () => {
+  const { fetcher, callLog } = mock();
+  const handle = checkoutHandler(env, fetcher);
+  const result = await handle(browser("quote", { tier: "standard", coupon: " beyond20 ", discount: 999999 }));
+  assert.equal(result.status, 200);
+  assert.deepEqual(await result.json(), {
+    code: "BEYOND20", tier: "standard", price: 350000, discount: 70000, amount: 280000,
+    discountType: "percent", discountValue: 20,
+  });
+  const [, path, args] = callLog[0];
+  assert.match(path, /summit_coupon_quote$/);
+  assert.equal(args.p_code, "BEYOND20");
+  assert.equal(args.p_mode, "test");
+  assert.equal(Object.hasOwn(args, "p_discount"), false);
+  assert.match(args.p_origin_hash, /^[0-9a-f]{64}$/);
+});
+
+test("invalid, expired, disabled and exhausted coupons return clear errors", async () => {
+  for (const [result, status] of [["coupon_not_found", 400], ["coupon_expired", 400],
+    ["coupon_disabled", 400], ["coupon_used_up", 400], ["coupon_limited", 429]]) {
+    const { fetcher } = mock({ quote: { result } });
+    const response = await checkoutHandler(env, fetcher)(browser("quote", { tier: "standard", coupon: "SAVE10" }));
+    assert.equal(response.status, status, result);
+    const body = await response.json();
+    assert.equal(body.code, result);
+    assert.ok(body.message.length > 10);
+  }
+  const { fetcher, callLog } = mock();
+  const malformed = await checkoutHandler(env, fetcher)(browser("quote", { tier: "standard", coupon: "x'; drop" }));
+  assert.equal(malformed.status, 400);
+  assert.equal(callLog.length, 0, "malformed codes never reach the database");
+});
+
+test("create forwards the coupon code so the database reprices the order", async () => {
+  const { fetcher, callLog } = mock();
+  const result = await checkoutHandler(env, fetcher)(browser("create", { ...customer, coupon: "beyond20" }));
+  assert.equal(result.status, 200);
+  assert.equal(callLog[0][2].p_coupon, "BEYOND20");
+  const plain = mock();
+  await checkoutHandler(env, plain.fetcher)(browser("create", customer));
+  assert.equal(plain.callLog[0][2].p_coupon, null);
+  const expired = mock({ reserve: { result: "coupon_expired" } });
+  const refused = await checkoutHandler(env, expired.fetcher)(browser("create", { ...customer, coupon: "OLD10" }));
+  assert.equal(refused.status, 400);
+  assert.equal((await refused.json()).code, "coupon_expired");
+  assert.equal(expired.callLog.length, 1, "a refused coupon never opens a Razorpay order");
 });
 
 test("an unapproved amount never opens a Razorpay order", async () => {
