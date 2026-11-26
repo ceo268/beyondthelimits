@@ -10,6 +10,26 @@
   let attempt;
   let busy = false;
   let sdkPromise;
+  // GA4 funnel: begin_checkout -> add_payment_info -> purchase (plus payment_failed / checkout_cancel / checkout_error).
+  const analytics = window.SummitAnalytics || { track() {}, item: () => ({}) };
+  // Uses the amount actually payable (after any coupon) and GA4's standard "coupon" field.
+  const passEvent = (extra = {}) => {
+    const applied = coupon && coupon.tier === selection.tier;
+    return { ...analytics.item(selection.tier, selection.label, payable()), ...(applied ? { coupon: coupon.code } : {}), ...extra };
+  };
+  function trackPurchase(order) {
+    if (order?.status !== "paid" || !order.reference || selection?.mode !== "live") return;
+    const key = "summit-ga-purchase-" + order.reference;
+    try {
+      if (localStorage.getItem(key)) return;
+      localStorage.setItem(key, "1");
+    } catch {
+      // Without storage the purchase may be sent again on a later status check; GA4 also dedupes transaction_id.
+    }
+    // The server's charged amount is the source of truth for revenue.
+    const value = Number.isInteger(order.amount) ? { value: order.amount / 100 } : {};
+    analytics.track("purchase", passEvent({ transaction_id: order.reference, ...value }));
+  }
 
   dialog.innerHTML = `
     <div class="checkout-top">
@@ -315,6 +335,7 @@
         showForm(copy.failed);
       } else {
         saveAttempt();
+        trackPurchase(result);
         showResult(result, formatResult(result));
       }
     } catch {
@@ -347,6 +368,7 @@
       attempt.outcome = order;
       if (terminal(order)) {
         saveAttempt();
+        trackPurchase(order);
         showResult(order, formatResult(order));
         return;
       }
@@ -366,15 +388,23 @@
         modal: {
           ondismiss: () => {
             setBusy(false);
-            if (!attempt.verifying) showForm(paymentFailed ? copy.failed : copy.closed);
+            if (!attempt.verifying) {
+              analytics.track("checkout_cancel", passEvent({ after_failed_payment: paymentFailed }));
+              showForm(paymentFailed ? copy.failed : copy.closed);
+            }
           },
         },
       });
-      payment.on("payment.failed", () => { paymentFailed = true; });
+      payment.on("payment.failed", () => {
+        paymentFailed = true;
+        analytics.track("payment_failed", passEvent());
+      });
       dialog.close();
       setBusy(true);
+      analytics.track("add_payment_info", passEvent({ payment_type: "razorpay" }));
       payment.open();
     } catch (error) {
+      analytics.track("checkout_error", { reason: String(error.code || "unavailable").slice(0, 40), item_id: selection.tier });
       setBusy(false);
       if (couponCode && error.code === "price_changed") {
         // The organizer edited the coupon after it was applied: show the server's new price.
@@ -435,6 +465,7 @@
       const catalog = await loadCatalog();
       const tier = catalog.tiers.find((item) => item.tier === button.dataset.pass);
       if (!tier) {
+        analytics.track("checkout_error", { reason: "pass_unavailable", item_id: button.dataset.pass });
         showNotice(copy.soldOut);
         return;
       }
@@ -446,6 +477,7 @@
       if (attempt.verifying || terminal(attempt.outcome)) {
         showResult(attempt.outcome, formatResult(attempt.outcome || {}));
       } else {
+        analytics.track("begin_checkout", passEvent());
         showForm();
         // A coupon applied on another pass is repriced for this one by the server.
         if (carried) {
@@ -454,6 +486,7 @@
         }
       }
     } catch {
+      analytics.track("checkout_error", { reason: "catalog_unavailable", item_id: button.dataset.pass });
       showNotice(copy.unavailable);
     } finally {
       button.removeAttribute("aria-busy");
