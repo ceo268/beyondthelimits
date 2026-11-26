@@ -216,3 +216,53 @@ body { background: var(--admin-background); }
 @media (max-width: 420px) {
   .coupon-form-grid { grid-template-columns: 1fr; }
 }
+
+/* Website analytics (GA4) */
+.insights-body { display: grid; gap: 1rem; padding: 0 clamp(16px, 2vw, 28px) clamp(16px, 2vw, 28px); }
+.range-switch { display: inline-flex; padding: 3px; border: 1px solid var(--admin-divider); border-radius: var(--radius-pill); background: var(--admin-input); }
+.range-switch button { min-height: 34px; padding: .3rem .8rem; border: 0; border-radius: var(--radius-pill); background: none; color: var(--muted); font: inherit; font-size: .8rem; font-weight: 700; cursor: pointer; }
+.range-switch button[aria-pressed="true"] { background: var(--gold-gradient); color: var(--black); }
+.insight-metrics { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 12px; }
+.metric-live dd strong { display: flex; align-items: center; gap: .45rem; color: var(--paid-text); }
+.metric-live dd strong::before { content: ""; width: 9px; height: 9px; flex: none; border-radius: var(--radius-round); background: currentColor; box-shadow: 0 0 0 4px rgb(169 233 194 / .2); animation: insight-pulse 2s ease-in-out infinite; }
+@keyframes insight-pulse { 50% { box-shadow: 0 0 0 7px rgb(169 233 194 / .05); } }
+.insight-card { min-width: 0; padding: clamp(14px, 1.6vw, 20px); border: 1px solid var(--admin-divider); border-radius: var(--radius-card); background: var(--admin-input); }
+.insight-card h3 { font-size: 1rem; letter-spacing: -.02em; }
+.insight-card > p { margin-top: .2rem; color: var(--muted); font-size: .78rem; }
+.insight-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
+.insight-wide { grid-column: 1 / -1; }
+.insight-list { display: grid; gap: .55rem; margin-top: .85rem; padding: 0; list-style: none; }
+.insight-list li:not(.insight-empty) { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: .25rem .75rem; align-items: baseline; font-size: .86rem; }
+.insight-label { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.insight-list strong { color: var(--gold-light); font-variant-numeric: tabular-nums; }
+.insight-bar { grid-column: 1 / -1; height: 5px; border-radius: var(--radius-pill); background: linear-gradient(90deg, var(--gold-dark), var(--gold) var(--share), var(--admin-divider) var(--share)); }
+.insight-empty { color: var(--muted); font-size: .82rem; line-height: 1.45; }
+.insight-bars { display: flex; align-items: flex-end; gap: clamp(2px, .5vw, 8px); height: 190px; margin-top: .9rem; }
+.insight-column { position: relative; display: flex; flex: 1; flex-direction: column; justify-content: flex-end; align-items: center; min-width: 0; height: 100%; gap: .3rem; }
+.insight-column span { width: 100%; max-width: 46px; min-height: 2px; border-radius: 6px 6px 2px 2px; background: linear-gradient(180deg, var(--gold-bright), var(--gold-dark)); }
+.insight-column em { color: var(--cream); font-size: .7rem; font-style: normal; font-weight: 700; }
+.insight-column small { color: var(--muted); font-size: .64rem; white-space: nowrap; }
+.insight-column:first-child small { align-self: flex-start; }
+.insight-column:last-child small { align-self: flex-end; }
+.insight-bars:has(.insight-column:nth-child(15)) :is(em, small) { visibility: hidden; }
+.insight-bars:has(.insight-column:nth-child(15)) .insight-column:is(:first-child, :last-child) small { visibility: visible; }
+.insight-foot { color: var(--muted); font-size: .78rem; }
+.insight-foot .text-link { margin-left: .4rem; }
+.insights-panel[aria-busy="true"] .insights-body { opacity: .6; }
+@media (max-width: 1100px) {
+  .insight-metrics { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .insight-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@media (max-width: 720px) {
+  .insight-metrics, .insight-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .insight-grid > .insight-card { grid-column: 1 / -1; }
+  .insights-panel .purchase-top { flex-direction: column; align-items: flex-start; }
+  .range-switch { width: 100%; }
+  .range-switch button { flex: 1; padding-inline: .3rem; }
+  .insight-bars { height: 150px; }
+  .insight-bars:has(.insight-column:nth-child(8)) :is(em, small) { visibility: hidden; }
+  .insight-bars:has(.insight-column:nth-child(8)) .insight-column:is(:first-child, :last-child) small { visibility: visible; }
+  .admin-navigation { overflow-x: auto; scrollbar-width: none; }
+  .admin-navigation::-webkit-scrollbar { display: none; }
+  .admin-navigation a { flex: none; white-space: nowrap; }
+}

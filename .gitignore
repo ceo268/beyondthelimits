@@ -7,3 +7,6 @@ node_modules/
 supabase/.temp/
 supabase/.branches/
 *.local.sql
+# Google service account keys (GA4 reporting for the admin panel)
+*service-account*.json
+supabase/ga-*.json

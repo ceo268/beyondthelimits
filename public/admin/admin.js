@@ -72,7 +72,7 @@ async function accessToken() {
 }
 
 function updateActiveSection() {
-  const active = ["#purchases", "#checkin", "#coupons"].includes(location.hash) ? location.hash.slice(1) : "overview";
+  const active = ["#analytics", "#purchases", "#checkin", "#coupons"].includes(location.hash) ? location.hash.slice(1) : "overview";
   nodeList("[data-section]").forEach((link) => {
     if (link.dataset.section === active) link.setAttribute("aria-current", "location");
     else link.removeAttribute("aria-current");
