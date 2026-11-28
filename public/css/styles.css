@@ -529,6 +529,22 @@ mark { padding: .12em .23em .15em; border-radius: var(--radius-mark); color: var
 }
 .speaker-media .speaker-portrait > span { margin-bottom: 30%; width: 32%; }
 .speaker-media .slot-image { object-position: 50% 18%; }
+/* Organisation logo label in the caption, above the name (and in the phone sheet), clear of faces. */
+.speaker-logo {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  height: clamp(28px, 2.4vw, 34px);
+  max-width: 100%;
+  margin-bottom: .65rem;
+  padding: 5px 9px;
+  border-radius: 8px;
+  background: #fff;
+  box-shadow: 0 4px 14px rgb(0 0 0 / .35);
+}
+.speaker-logo.is-dark { background: rgb(10 9 7 / .88); border: 1px solid rgb(226 192 92 / .45); }
+.speaker-logo img { display: block; width: auto; height: 100%; max-width: 120px; object-fit: contain; }
+.speaker-sheet-head .speaker-logo { height: 34px; margin-bottom: .55rem; box-shadow: none; }
 .speaker-caption {
   position: absolute;
   inset: auto 0 0;
@@ -892,6 +908,8 @@ mark { padding: .12em .23em .15em; border-radius: var(--radius-mark); color: var
   .speaker-copy h3 { font-size: .9rem; }
   .speaker-copy p { font-size: .6rem; letter-spacing: .1em; }
   .speaker-caption { padding: 0 .75rem .8rem; }
+  .speaker-logo { height: 22px; margin-bottom: .45rem; padding: 3px 6px; border-radius: 6px; gap: 5px; }
+  .speaker-logo img { max-width: 92px; }
   .speaker-caption h3::after { width: 30px; margin: .45rem 0 .5rem; }
   .speaker-caption p { letter-spacing: .1em; }
   .speaker-media, .speaker-back { border-radius: 14px; }

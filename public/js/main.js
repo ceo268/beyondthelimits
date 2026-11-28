@@ -181,7 +181,7 @@ function renderValuesAndSpeakers() {
   $("#speakers").innerHTML = `
     ${heading("speakers-title", lineup.heading, lineup.highlight)}
     <ul class="speaker-grid">
-      ${speakers.map(({ name, role, slug, photo, highlight, bio }) => {
+      ${speakers.map(({ name, role, slug, photo, highlight, bio, logo, logoTheme, logoAlt }) => {
         const initials = name.split(/[.\s]+/).filter(Boolean).slice(0, 2).map((part) => part[0]).join("");
         // " · " separates two roles: each goes on its own line.
         const roleLines = role.split(" · ").map(safe).join("<br>");
@@ -200,7 +200,7 @@ function renderValuesAndSpeakers() {
           <div class="speaker-flip">
             <div class="speaker-media">
               <div class="speaker-portrait" aria-hidden="true"><span>${safe(initials)}</span>${optionalImage(photo)}</div>
-              <div class="speaker-caption"><h3>${safe(name)}</h3>${role ? `<p>${roleLines}</p>` : ""}</div>
+              <div class="speaker-caption">${speakerLogo(logo, logoTheme, logoAlt)}<h3>${safe(name)}</h3>${role ? `<p>${roleLines}</p>` : ""}</div>
             </div>
             ${back}
           </div>
@@ -208,6 +208,14 @@ function renderValuesAndSpeakers() {
       }).join("")}
     </ul>`;
   bindSpeakerDrawers();
+}
+
+// The organisation's logo on a small chip: white by default, dark for logos with white lettering.
+function speakerLogo(logo, theme, alt = "") {
+  if (!logo) return "";
+  const files = Array.isArray(logo) ? logo : [logo];
+  return `<span class="speaker-logo${theme === "dark" ? " is-dark" : ""}" role="img" aria-label="${safe(alt)}">${files
+    .map((src) => `<img src="${safe(src)}" alt="" loading="lazy" decoding="async">`).join("")}</span>`;
 }
 
 // A mouse opens the drawer on hover via CSS. A finger or pen has no hover, so a
@@ -256,13 +264,14 @@ function speakerSheet() {
     show(speaker, card) {
       if (!speaker) return;
       returnFocus = card;
-      const { name, role, photo, highlight, bio } = speaker;
+      const { name, role, photo, highlight, bio, logo, logoTheme, logoAlt } = speaker;
       dialog.innerHTML = `<div class="speaker-sheet-content">
         <span class="speaker-sheet-grip" aria-hidden="true"></span>
         <button type="button" class="speaker-sheet-close" aria-label="Close">×</button>
         <div class="speaker-sheet-inner">
           <div class="speaker-sheet-photo">${photo ? `<img src="${safe(photo)}" alt="">` : ""}</div>
           <div class="speaker-sheet-head">
+            ${speakerLogo(logo, logoTheme, logoAlt)}
             <h3 id="speaker-sheet-name">${safe(name)}</h3>
             ${role ? `<p>${safe(role)}</p>` : ""}
             ${highlight ? `<p class="speaker-highlight">${icon("sparkle")}<span>${safe(highlight)}</span></p>` : ""}
