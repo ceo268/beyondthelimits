@@ -300,6 +300,23 @@ const CONTENT = {
     button: "Email us",
     email: "events@beyondthelimits.co.in",
   },
+  // Coupon popup. Shown once per visitor with a countdown of `minutes`. The code must also exist and be
+  // enabled in Admin → Coupons (that's where the real discount is set and checked). Set enabled: false to hide it.
+  promo: {
+    enabled: true,
+    code: "BTL500",
+    minutes: 5,
+    delaySeconds: 6,
+    kicker: "Limited-time offer",
+    title: "₹500 off your pass",
+    text: "Use this code at checkout to save ₹500 on any summit pass. Claim it before the timer runs out.",
+    copy: "Copy code",
+    copied: "Copied!",
+    cta: "Claim & get my pass",
+    close: "Close offer",
+    timerLabel: "Offer ends in",
+    chip: "₹500 off",
+  },
   // Cookie banner. Google Analytics only starts after a visitor selects Accept.
   consent: {
     title: "Cookies & analytics",

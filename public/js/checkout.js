@@ -472,7 +472,10 @@
       selection = { ...tier, mode: catalog.mode };
       if (!remembered.has(tier.tier)) remembered.set(tier.tier, readAttempt(tier.tier, catalog.mode));
       attempt = remembered.get(tier.tier);
-      const carried = coupon && coupon.tier !== tier.tier ? coupon.code : null;
+      // A coupon applied on another pass is carried over; otherwise use the promo popup's code, if the
+      // visitor claimed it. Either way the server prices it (and refuses it if it's no longer valid).
+      const promoCode = !coupon && window.SummitPromo ? window.SummitPromo.claimedCode() : null;
+      const carried = coupon && coupon.tier !== tier.tier ? coupon.code : promoCode;
       showDetails(tier, catalog.mode);
       if (attempt.verifying || terminal(attempt.outcome)) {
         showResult(attempt.outcome, formatResult(attempt.outcome || {}));
