@@ -8,15 +8,15 @@
   <meta name="theme-color" content="#000000">
   <title>Purchases | Beyond the Limits Admin</title>
   <link rel="icon" href="../assets/favicon.png" type="image/png">
-  <link rel="stylesheet" href="../css/styles.css?v=20261183">
-  <link rel="stylesheet" href="admin.css?v=20261183">
-  <script src="../js/content.js?v=20261183" defer></script>
-  <script src="../js/config.js?v=20261183" defer></script>
-  <script src="../js/api.js?v=20261183" defer></script>
-  <script src="admin.js?v=20261183" defer></script>
-  <script src="checkin.js?v=20261183" defer></script>
-  <script src="coupons.js?v=20261183" defer></script>
-  <script src="insights.js?v=20261183" defer></script>
+  <link rel="stylesheet" href="../css/styles.css?v=20261184">
+  <link rel="stylesheet" href="admin.css?v=20261184">
+  <script src="../js/content.js?v=20261184" defer></script>
+  <script src="../js/config.js?v=20261184" defer></script>
+  <script src="../js/api.js?v=20261184" defer></script>
+  <script src="admin.js?v=20261184" defer></script>
+  <script src="checkin.js?v=20261184" defer></script>
+  <script src="coupons.js?v=20261184" defer></script>
+  <script src="insights.js?v=20261184" defer></script>
 </head>
 <body>
   <a class="skip-link" href="#admin-main">Skip to content</a>
@@ -112,6 +112,15 @@
               </div>
             </div>
             <p class="orders-status" id="analytics-status" role="status"></p>
+            <article class="insight-card consent-summary" id="consent-summary" hidden>
+              <h3>Cookie consent</h3><p>Visitors who answered the cookie banner in this period. Google Analytics only counts those who accepted.</p>
+              <dl class="consent-stats">
+                <div><dt>Accepted</dt><dd id="consent-accepted">—</dd></div>
+                <div><dt>Declined</dt><dd id="consent-declined">—</dd></div>
+                <div><dt>Acceptance rate</dt><dd id="consent-rate">—</dd></div>
+              </dl>
+              <p class="consent-note" id="consent-note" role="status"></p>
+            </article>
             <div class="insights-body" id="analytics-body" hidden>
               <dl class="insight-metrics">
                 <div class="metric metric-live"><dt>Live now</dt><dd><strong id="insight-live">—</strong><span>Visitors in the last 30 minutes</span></dd></div>

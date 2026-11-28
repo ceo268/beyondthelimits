@@ -128,7 +128,34 @@
     google_auth: "Google rejected the service account key. Create a new JSON key and send it again.",
   };
 
+  // Cookie banner answers (accept/decline per day), counted in Supabase. Independent of Google Analytics.
+  const consentDays = { today: 1, "7d": 7, "30d": 30, "90d": 90 };
+  let consentRequest = 0;
+  async function loadConsent() {
+    const call = ++consentRequest;
+    const card = $("#consent-summary");
+    const note = $("#consent-note");
+    card.hidden = false;
+    try {
+      const totals = await api.admin("summit_admin_consent", { p_days: consentDays[range] || 7 }, await accessToken());
+      if (call !== consentRequest) return;
+      const answered = totals.accepted + totals.declined;
+      $("#consent-accepted").textContent = number.format(totals.accepted);
+      $("#consent-declined").textContent = number.format(totals.declined);
+      $("#consent-rate").textContent = answered ? percent.format(totals.accepted / answered) : "—";
+      note.textContent = answered ? "" : "No answers yet for this period.";
+    } catch (error) {
+      if (call !== consentRequest) return;
+      ["accepted", "declined", "rate"].forEach((key) => { $("#consent-" + key).textContent = "—"; });
+      // 404: the cookie-consent database update hasn't been applied yet.
+      note.textContent = error.status === 404
+        ? "Cookie consent counts aren’t set up yet: apply the database update 20261128100000_cookie_consent.sql in Supabase."
+        : "Cookie consent counts couldn’t be loaded. Select Refresh to try again.";
+    }
+  }
+
   async function load(force = false) {
+    void loadConsent();
     const call = ++request;
     panel.setAttribute("aria-busy", "true");
     refresh.disabled = true;
@@ -166,8 +193,10 @@
   document.addEventListener("summit:signedin", () => load());
   document.addEventListener("summit:reset", () => {
     request += 1;
+    consentRequest += 1;
     loaded = false;
     body.hidden = true;
+    $("#consent-summary").hidden = true;
     status.textContent = "";
   });
 })();

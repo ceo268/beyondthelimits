@@ -266,3 +266,15 @@ body { background: var(--admin-background); }
   .admin-navigation::-webkit-scrollbar { display: none; }
   .admin-navigation a { flex: none; white-space: nowrap; }
 }
+
+/* Cookie consent card (Analytics panel) */
+.consent-summary { margin: 0 clamp(16px, 2vw, 28px) 1.2rem; }
+.consent-summary[hidden] { display: none; }
+.consent-summary > p { margin-top: .2rem; color: var(--muted); font-size: .82rem; }
+.consent-stats { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: .7rem; margin-top: .9rem; }
+.consent-stats > div { padding: .7rem .8rem; border: 1px solid var(--admin-divider); border-radius: var(--radius-small); background: var(--black); }
+.consent-stats dt { color: var(--muted); font-size: .72rem; text-transform: uppercase; letter-spacing: .1em; }
+.consent-stats dd { margin: .25rem 0 0; color: var(--gold-light); font-size: 1.35rem; font-weight: 700; }
+.consent-note { margin-top: .6rem; color: var(--gold-light); font-size: .82rem; }
+.consent-note:empty { display: none; }
+@media (max-width: 520px) { .consent-stats { grid-template-columns: 1fr 1fr; } }

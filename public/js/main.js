@@ -336,7 +336,7 @@ function renderContact() {
       </div>
       <div><h2>${safe(footer.locationHeading)}</h2><p>${safe(summit.venue)}</p>${dateText("long")}</div>
     </div>
-    <div class="footer-bottom">${safe(footer.copyright)}</div>`;
+    <div class="footer-bottom"><span>${safe(footer.copyright)}</span>${footer.cookieSettings ? `<button type="button" class="footer-cookie-link" data-cookie-settings>${safe(footer.cookieSettings)}</button>` : ""}</div>`;
 }
 
 function bindStaticContent() {

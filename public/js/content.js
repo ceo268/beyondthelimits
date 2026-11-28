@@ -300,7 +300,16 @@ const CONTENT = {
     button: "Email us",
     email: "events@beyondthelimits.co.in",
   },
+  // Cookie banner. Google Analytics only starts after a visitor selects Accept.
+  consent: {
+    title: "Cookies & analytics",
+    text: "We use Google Analytics cookies to count visits and see which parts of the site people use, so we can improve it. They’re only set if you accept. We never send your name, email or phone number.",
+    accept: "Accept",
+    decline: "Decline",
+    label: "Cookie consent",
+  },
   footer: {
+    cookieSettings: "Cookie settings",
     wordmark: ["BEYOND", "THE LIMITS"],
     description: "One day for founders, creators and business leaders.",
     eventHeading: "Event",
